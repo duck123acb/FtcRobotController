@@ -1,3 +1,6 @@
+# main
+main code at [TeamCode/src/main/java/org/firstinspires/ftc/teamcode](https://github.com/duck123acb/FtcRobotController/tree/main/TeamCode/src/main/java/org/firstinspires/ftc/teamcode)
+
 ## NOTICE
 
 This repository contains the public FTC SDK for the DECODE (2025-2026) competition season.
