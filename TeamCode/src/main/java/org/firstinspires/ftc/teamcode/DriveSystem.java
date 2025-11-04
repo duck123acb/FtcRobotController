@@ -5,9 +5,7 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 
 public class DriveSystem {
     DcMotor frontLeft, frontRight, backLeft, backRight;
-    DriveSystem() {}
-
-    void init(DcMotor fl, DcMotor fr, DcMotor bl, DcMotor br) {
+    DriveSystem(DcMotor fl, DcMotor fr, DcMotor bl, DcMotor br) {
         frontLeft = fl;
         frontRight = fr;
         backLeft = bl;
@@ -15,8 +13,7 @@ public class DriveSystem {
     }
 
     void drive(Gamepad gamepad) {
-        // note: The y-axis is reversed, so we negate it
-        double y = -gamepad.left_stick_y;   // forward/backward
+        double y = gamepad.left_stick_y;   // forward/backward
         double x = gamepad.left_stick_x;    // strafe left/right
         double rx = gamepad.right_stick_x;  // rotate right/left
 

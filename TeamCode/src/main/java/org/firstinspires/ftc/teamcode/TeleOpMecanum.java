@@ -8,7 +8,11 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 @TeleOp(name="TeleOp - Basic Mecanum (Linear)")
 public class TeleOpMecanum extends LinearOpMode {
     DcMotor frontLeft, frontRight, backLeft, backRight;
+    DcMotor leftIntake, rightIntake;
+    DcMotor flingMotor;
+
     DriveSystem driveSystem;
+    IntakeSystem intakeSystem;
 
     @Override
     public void runOpMode() {
@@ -20,7 +24,10 @@ public class TeleOpMecanum extends LinearOpMode {
         frontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
         backLeft.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        driveSystem.init(frontLeft, frontRight, backLeft, backRight);
+        // TODO: init intake motors/fling motor
+
+        driveSystem = new DriveSystem(frontLeft, frontRight, backLeft, backRight);
+        intakeSystem = new IntakeSystem(leftIntake, rightIntake, flingMotor);
 
         telemetry.addLine("Initialized — ready to start!");
         telemetry.update();
@@ -30,7 +37,22 @@ public class TeleOpMecanum extends LinearOpMode {
 
         // run until stop is pressed
         while (opModeIsActive()) {
-           driveSystem.drive(gamepad2);
+            driveSystem.drive(gamepad2);
+
+            if (gamepad2.aWasPressed()) {
+                intakeSystem.intake();
+            }
+            else if (gamepad2.bWasPressed()) {
+                intakeSystem.outtake();
+            }
+            else {
+                intakeSystem.stop();
+            }
+
+
+
+
+//            telemetry.update();
         }
     }
 }
