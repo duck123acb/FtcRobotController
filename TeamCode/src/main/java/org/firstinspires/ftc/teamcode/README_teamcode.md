@@ -6,6 +6,13 @@ This module, TeamCode, is the place where you will write/paste the code for your
 robot controller App. This module is currently empty (a clean slate) but the
 process for adding OpModes is straightforward.
 
+## Code Structure
+
+*   `TeleOpMecanum.java`: The main tele-operated script for a mecanum-based robot.
+*   `DriveSystem.java`: Manages the robot's movement, including mecanum-specific driving logic.
+*   `IntakeSystem.java`: Controls the robot's intake mechanism.
+*   `PIDSystem.java`: A PID controller for precise motor and mechanism adjustments.
+
 ## Creating your own OpModes
 
 The easiest way to create your own OpMode is to copy a Sample OpMode and make it your own.
@@ -128,4 +135,4 @@ Note: Some names start with "Team" and others start with "team".  This is intent
 
 5)  Add:    include ':Team0417' to the "/settings.gradle" file.
     
-6)  Open up Android Studios and clean out any old files by using the menu to "Build/Clean Project""
+6)  Open up Android Studios and clean out any old files by using the menu to "Build/Clean Project"
