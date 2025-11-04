@@ -3,7 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 public class PIDSystem {
-double kp, ki, kd;
+    double kp, ki, kd;
     private double integralSum = 0;
     private double lastError = 0;
 
