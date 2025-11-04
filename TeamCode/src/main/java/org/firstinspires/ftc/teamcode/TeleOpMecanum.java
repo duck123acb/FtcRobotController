@@ -49,8 +49,9 @@ public class TeleOpMecanum extends LinearOpMode {
                 intakeSystem.stop();
             }
 
-
-
+            if (gamepad2.xWasPressed()) {
+                intakeSystem.moveFlingMotor(90);
+            }
 
 //            telemetry.update();
         }
