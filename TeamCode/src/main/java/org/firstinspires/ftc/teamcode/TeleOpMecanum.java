@@ -9,10 +9,10 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 public class TeleOpMecanum extends LinearOpMode {
     DcMotor frontLeft, frontRight, backLeft, backRight;
     DcMotor leftIntake, rightIntake;
-    DcMotor flingMotor;
+    DcMotor leftOuttake, rightOuttake;
 
     DriveSystem driveSystem;
-    IntakeSystem intakeSystem;
+    TakeSystem intakeSystem, outtakeSystem;
 
     @Override
     public void runOpMode() {
@@ -21,13 +21,14 @@ public class TeleOpMecanum extends LinearOpMode {
         frontRight = hardwareMap.get(DcMotor.class, "frontRightMotor");
         backLeft = hardwareMap.get(DcMotor.class, "backLeftMotor");
         backRight = hardwareMap.get(DcMotor.class, "backRightMotor");
+        leftOuttake = hardwareMap.get(DcMotor.class, "leftOuttakeMotor");
         frontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
         backLeft.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // TODO: init intake motors/fling motor
 
         driveSystem = new DriveSystem(frontLeft, frontRight, backLeft, backRight);
-        intakeSystem = new IntakeSystem(leftIntake, rightIntake, flingMotor);
+        intakeSystem = new TakeSystem(leftIntake, rightIntake);
 
         telemetry.addLine("Initialized — ready to start!");
         telemetry.update();
@@ -40,18 +41,20 @@ public class TeleOpMecanum extends LinearOpMode {
             driveSystem.drive(gamepad2);
 
             if (gamepad2.aWasPressed()) {
-                intakeSystem.intake();
-            }
-            else if (gamepad2.bWasPressed()) {
-                intakeSystem.outtake();
+                intakeSystem.spin();
             }
             else {
                 intakeSystem.stop();
             }
 
-            if (gamepad2.xWasPressed()) {
-                intakeSystem.moveFlingMotor(90);
+            if (gamepad2.bWasPressed()) {
+                outtakeSystem.spin();
             }
+            else {
+                outtakeSystem.stop();
+            }
+
+            leftOuttake.setPower(1);
 
 //            telemetry.update();
         }
