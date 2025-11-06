@@ -1,11 +1,11 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.systems;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 
 public class TakeSystem {
     DcMotor leftMotor, rightMotor;
 
-    TakeSystem(DcMotor leftMotor, DcMotor rightMotor) {
+    public TakeSystem(DcMotor leftMotor, DcMotor rightMotor) {
         this.leftMotor = leftMotor;
         this.rightMotor = rightMotor;
     }
