@@ -1,45 +1,36 @@
 package org.firstinspires.ftc.teamcode.vision;
 
-// testing the husky cam
-/*
-    STEPS:
-    Plug HuskyLens into I2C port on Control Hub
-    Name it “camera” in configuration
-    Run this OpMode
-    Check telemetry
-
-    FAILS IF:
-    all zeros
-    throwing I2C errors
-    Hex values not changing when the HuskyLens is running
- */
-
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-@TeleOp(name = "HL_TestRead")
+@TeleOp(name = "HL_TestRead_Closest")
 public class HL_TestRead extends LinearOpMode {
+    int GREEN_BALL_ID = 1;
+    int PURPLE_BALL_ID = 2;
+
     @Override
     public void runOpMode() throws InterruptedException {
         HuskyLensI2C husky = new HuskyLensI2C(hardwareMap, "camera");
 
-        telemetry.addLine("Initialized. Press start to read I2C");
+        telemetry.addLine("Initialized. Press start");
         telemetry.update();
+
         waitForStart();
 
         while (opModeIsActive()) {
-            byte[] data = husky.readRaw(16); // read first 16 bytes
+            HuskyLensI2C.HuskyLensBlock[] blocks = husky.getBlocks(Algorithm.COLOR_RECOGNITION);
 
-            telemetry.addData("Raw Data", bytesToHex(data));
+            HuskyLensI2C.HuskyLensBlock closestGreen = husky.getClosestBlock(blocks, GREEN_BALL_ID);
+            HuskyLensI2C.HuskyLensBlock closestPurple = husky.getClosestBlock(blocks, PURPLE_BALL_ID);
+
+            if (closestGreen != null) {
+                telemetry.addData("Green Ball", "x=%d y=%d w=%d h=%d", closestGreen.xCenter, closestGreen.yCenter, closestGreen.width, closestGreen.height);
+            }
+            if (closestPurple != null) {
+                telemetry.addData("Purple Ball", "x=%d y=%d w=%d h=%d", closestPurple.xCenter, closestPurple.yCenter, closestPurple.width, closestPurple.height);
+            }
+
             telemetry.update();
         }
-    }
-
-    private String bytesToHex(byte[] bytes) {
-        StringBuilder sb = new StringBuilder();
-        for (byte b : bytes) {
-            sb.append(String.format("%02X ", b));
-        }
-        return sb.toString().trim();
     }
 }
