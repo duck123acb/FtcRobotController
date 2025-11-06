@@ -21,14 +21,19 @@ public class TeleOpMecanum extends LinearOpMode {
         frontRight = hardwareMap.get(DcMotor.class, "frontRightMotor");
         backLeft = hardwareMap.get(DcMotor.class, "backLeftMotor");
         backRight = hardwareMap.get(DcMotor.class, "backRightMotor");
+        leftIntake = hardwareMap.get(DcMotor.class, "leftIntakeMotor");
+        rightIntake = hardwareMap.get(DcMotor.class, "rightIntakeMotor");
         leftOuttake = hardwareMap.get(DcMotor.class, "leftOuttakeMotor");
+        rightOuttake = hardwareMap.get(DcMotor.class, "rightOuttakeMotor");
+
         frontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
         backLeft.setDirection(DcMotorSimple.Direction.REVERSE);
-
-        // TODO: init intake motors/fling motor
+        leftIntake.setDirection(DcMotorSimple.Direction.REVERSE);
+        rightIntake.setDirection(DcMotorSimple.Direction.REVERSE);
 
         driveSystem = new DriveSystem(frontLeft, frontRight, backLeft, backRight);
         intakeSystem = new TakeSystem(leftIntake, rightIntake);
+        outtakeSystem = new TakeSystem(leftOuttake, rightOuttake);
 
         telemetry.addLine("Initialized — ready to start!");
         telemetry.update();
