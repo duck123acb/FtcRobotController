@@ -61,17 +61,12 @@ public class TeleOpMecanum extends LinearOpMode {
             else
                 outtakeSystem.stop();
 
-            if (gamepad2.dpad_up) {
+            if (gamepad2.dpad_up)
                 outtakePower = Math.min(outtakePower + 0.1, 1);
-            } else if (gamepad2.dpad_down) {
+            else if (gamepad2.dpad_down)
                 outtakePower = Math.max(outtakePower - 0.1, 0);
-            }
-
-
-
 //            telemetry.update();
         }
-
         intakeSystem.stop();
     }
 }
