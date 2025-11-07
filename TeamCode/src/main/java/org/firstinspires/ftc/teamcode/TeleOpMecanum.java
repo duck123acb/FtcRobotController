@@ -30,8 +30,6 @@ public class TeleOpMecanum extends LinearOpMode {
 
         frontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
         backLeft.setDirection(DcMotorSimple.Direction.REVERSE);
-        leftIntake.setDirection(DcMotorSimple.Direction.REVERSE);
-        rightIntake.setDirection(DcMotorSimple.Direction.REVERSE);
 
         driveSystem = new DriveSystem(frontLeft, frontRight, backLeft, backRight);
         intakeSystem = new TakeSystem(leftIntake, rightIntake);
@@ -53,8 +51,8 @@ public class TeleOpMecanum extends LinearOpMode {
             driveSystem.drive(gamepad2);
 
             // intake
-            leftIntake.setPower(-1);
-            rightIntake.setPower(-1);
+            leftIntake.setPower(1);
+            rightIntake.setPower(1);
 
             if (gamepad2.dpad_down) {
                 leftOuttake.setPower(-1);
