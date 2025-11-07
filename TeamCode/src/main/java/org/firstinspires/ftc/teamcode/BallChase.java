@@ -7,9 +7,19 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 @Autonomous(name = "HuskyLensTest")
 public class BallChase extends LinearOpMode {
-
-
     private HuskyLens huskylens;
+
+    /*
+     * TAG 1 - G P P (2 1 1)
+     * TAG 2 - P G P (1 2 1)
+     * TAG 3 - P P G (1 1 2)
+     */
+    final static int[][] ballOrders = {
+        {2, 1, 1},
+        {1, 2, 1},
+        {1, 1, 2}
+    };
+
 
     /**
      * This OpMode illustrates how to use the DFRobot HuskyLens.
@@ -31,7 +41,6 @@ public class BallChase extends LinearOpMode {
 
         // Put initialization blocks here.
         telemetry.addData(">>", huskylens.knock() ? "Touch start to continue" : "Problem communicating with HuskyLens");
-//        huskylens.selectAlgorithm(HuskyLens.Algorithm.TAG_RECOGNITION);
         huskylens.selectAlgorithm(HuskyLens.Algorithm.COLOR_RECOGNITION);
         telemetry.update();
 
@@ -53,17 +62,12 @@ public class BallChase extends LinearOpMode {
         huskylens.close();
     }
 
-    /*
-     * TAG 1 - G P P (2 1 1)
-     * TAG 2 - P G P (1 2 1)
-     * TAG 3 - P P G (1 1 2)
-     */
-
-    void FindAprilTag(HuskyLens.Block[] blocks, int id, int x, int y) {
+    void SetAprilTag(HuskyLens.Block block, int id, int x, int y) {
+        huskylens.selectAlgorithm(HuskyLens.Algorithm.TAG_RECOGNITION);
 
     }
 
-    HuskyLens.Block GetClosestBall(HuskyLens.Block[] blocks, int targetID, int[] coords) {
+    HuskyLens.Block GetClosestBall(HuskyLens.Block[] blocks, int targetID) {
         HuskyLens.Block closest = null;
         int maxArea = -1;
 
