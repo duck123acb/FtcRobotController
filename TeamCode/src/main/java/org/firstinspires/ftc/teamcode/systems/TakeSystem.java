@@ -10,11 +10,10 @@ public class TakeSystem {
         this.rightMotor = rightMotor;
     }
 
-    public void spin() {
-        leftMotor.setPower(1);
-        leftMotor.setPower(1);
+    public void spin(double power) {
+        leftMotor.setPower(power);
+        rightMotor.setPower(power);
     }
-
 
     public void stop() {
         leftMotor.setPower(0);
