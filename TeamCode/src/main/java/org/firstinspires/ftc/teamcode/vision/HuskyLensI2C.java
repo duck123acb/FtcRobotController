@@ -18,7 +18,7 @@ Phase 1: Hardware Setup
 
 Phase 2: Training the Balls
     On HuskyLens, tap “Learn” → Color Recognition.
-    Place the first ball (say, greed) in front of the camera.
+    Place the first ball (green) in front of the camera.
     Tap “Add” to capture it; note the ID assigned.
     Repeat for the second ball (purple). Record its ID too.
 

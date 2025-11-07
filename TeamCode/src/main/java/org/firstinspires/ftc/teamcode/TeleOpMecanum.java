@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 
 import org.firstinspires.ftc.teamcode.systems.*;
 
-@TeleOp(name="TeleOp - Basic Mecanum (Linear)")
+@TeleOp(name="TeleOp - Mecanum (Linear)")
 public class TeleOpMecanum extends LinearOpMode {
     DcMotor frontLeft, frontRight, backLeft, backRight;
     DcMotor leftIntake, rightIntake;
@@ -45,25 +45,32 @@ public class TeleOpMecanum extends LinearOpMode {
 
         // run until stop is pressed
         while (opModeIsActive()) {
+            if (gamepad2.x) {
+                terminateOpModeNow();
+                break;
+            }
+
             driveSystem.drive(gamepad2);
 
-            if (gamepad2.aWasPressed()) {
-                intakeSystem.spin();
+            // intake
+            leftIntake.setPower(-1);
+            rightIntake.setPower(-1);
+
+            if (gamepad2.dpad_down) {
+                leftOuttake.setPower(-1);
+                rightOuttake.setPower(-1);
+
+//                intakeSystem.spin();
             }
             else {
-                intakeSystem.stop();
+                leftOuttake.setPower(0);
+                rightOuttake.setPower(0);
             }
 
-            if (gamepad2.bWasPressed()) {
-                outtakeSystem.spin();
-            }
-            else {
-                outtakeSystem.stop();
-            }
-
-            leftOuttake.setPower(1);
 
 //            telemetry.update();
         }
     }
 }
+
+
