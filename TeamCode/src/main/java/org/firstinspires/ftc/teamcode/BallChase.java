@@ -52,17 +52,21 @@ public class BallChase extends LinearOpMode {
 
         waitForStart();
 
-        // detect AprilTag and set ball order
+        // find order
         while (opModeIsActive() && ballOrder == null) {
             int id = SetAprilTag();
-
-            ballOrder = ballOrders[id]; // map 21->0, 22->1, 23->2
-            telemetry.addData("Ball Order Set", "Tag %d -> Order: %s", id, java.util.Arrays.toString(ballOrder));
-            telemetry.update();
+            if (id >= 21 && id <= 23) { // valid tag
+                ballOrder = ballOrders[id - 21]; // map 21->0, 22->1, 23->2
+                telemetry.addData("Ball Order Set", "Tag %d -> Order: %s", id, java.util.Arrays.toString(ballOrder));
+                telemetry.update();
+            }
         }
 
-        // loop through each ball in sequence
-        for (int targetID : ballOrder) {
+        int ballIndex = 0;
+
+        // start autonomous
+        while (opModeIsActive()) {
+            int targetID = ballOrder[ballIndex];
             boolean ballReached = false;
 
             while (opModeIsActive() && !ballReached) {
@@ -70,6 +74,7 @@ public class BallChase extends LinearOpMode {
                 HuskyLens.Block closest = GetClosestBall(blocks, targetID);
 
                 if (closest != null) {
+                    // PID-based driving
                     int targetX = 160; // assuming camera width = 320 px
                     double targetArea = 4000; // FIXME: tweak based on testing
 
@@ -91,26 +96,23 @@ public class BallChase extends LinearOpMode {
                             closest.id, closest.x, closest.y, closest.width, closest.height);
                     telemetry.update();
 
-                    if (closest.width * closest.height >= targetArea) {
+                    if (closest.width * closest.height >= targetArea) { // reached ball
                         ballReached = true;
                         stopMotors();
                         sleep(250); // optional pause before next ball
                     }
                 } else {
-                    // Ball not visible, stop motors
                     stopMotors();
                     telemetry.addData("Target Ball", "Not found");
                     telemetry.update();
                 }
 
-                sleep(50); // sensor update rate
+                sleep(50);
             }
+
+            // Move to the next ball in sequence, wrap around infinitely
+            ballIndex = (ballIndex + 1) % ballOrder.length;
         }
-
-        telemetry.addData("Autonomous", "Finished all balls!");
-        telemetry.update();
-
-        huskylens.close();
     }
 
     // --- Helper Methods ---
