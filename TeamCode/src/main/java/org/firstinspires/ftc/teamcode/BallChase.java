@@ -13,13 +13,23 @@ import org.firstinspires.ftc.teamcode.systems.TakeSystem;
 
 
 /**
- * Mid-level DECODE autonomous:
- * - HuskyLens used only at start to read tag (IDs 1..3)
- * - Known ball positions are pre-mapped (in inches) per ball ID
- * - Mecanum encoder moves + IMU heading hold
- * - Intake/shooter hooks left as simple methods to implement
- * TUNE: wheel/encoder constants, distances, and PID gains after first runs.
+ * 💡 Decode Auto — "BallChase"
+ * runs the DECODE auto routine using HuskyLens tags (1–3) to pick a ball order.
+ *
+ *  flow:
+ *  1. reads april tag (1–3) → decides color pattern order
+ *  2. moves to each pre-mapped ball position + intakes
+ *  3. drives to the basket, shoots, and resets
+ *
+ * things you’ll need to tune before comp:
+ *  - FIXME: ballSpots → actual field distances
+ *  - FIXME: PID gains (headingPID)
+ *  - FIXME: intakeOn/off logic for your TakeSystem
+ *  - FIXME: shootSequence timing + servo position
+ *  - FIXME: power constants (DRIVE_POWER, STRAFE_POWER, TURN_POWER)
+ *
  */
+
 @Autonomous(name = "BallChase_Decode_Mid")
 public class BallChase extends LinearOpMode {
     private HuskyLens huskylens;
@@ -37,7 +47,7 @@ public class BallChase extends LinearOpMode {
     // IMU
     private BNO055IMU imu;
     // PID controllers
-    private final PID headingPID = new PID(0.01, 0.0, 0.0005); // tune for turnToAngle
+    private final PID headingPID = new PID(0.01, 0.0, 0.0005); // FIXME: tune for turnToAngle
 
     // Tag -> ball order (IDs from HuskyLens are 1..3)
     private static final int[][] ballOrders = {
@@ -46,29 +56,31 @@ public class BallChase extends LinearOpMode {
             {1, 1, 2}  // tag 3
     };
 
-    // Pre-mapped ball pickup poses (inches) relative to your starting pose.
-    // Index is ball ID-1. Fill these with your field measurements.
-    // Format: {forwardFromStart, strafeFromStart, headingDeg}
+    // pre-mapped ball pickup poses (inches) relative to your starting pose.
+    // index is ball ID-1. Fill these with your field measurements.
+    // format: {forwardFromStart, strafeFromStart, headingDeg}
     private static final double[][] ballSpots = {
             {24.0, -8.0, 0.0},   // ball ID 1 (example: 24 inches forward, -8 strafe)
             {24.0, 0.0, 0.0},    // ball ID 2
             {24.0, 8.0, 0.0}     // ball ID 3
-    };
+    }; // FIXME: measure real positions for your field
 
-    // Shooting spot (example). Tune to your field.
-    private static final double SHOOT_HEADING = 90.0;
-    private static final double SHOOT_DISTANCE_INCHES = 40.0;
 
-    // Encoder / wheel constants (tweak to your motors/wheels)
-    private static final double COUNTS_PER_MOTOR_REV = 560; // e.g., NeveRest/GoBILDA 520/312 etc; adjust
-    private static final double WHEEL_DIAMETER_INCHES = 3.5; // tune
+    private static final double SHOOT_HEADING = 90.0; // FIXME: tune to your actual basket location
+    private static final double SHOOT_DISTANCE_INCHES = 40.0; // FIXME: measure real distance
+
+    // Encoder / wheel constants
+    private static final double COUNTS_PER_MOTOR_REV = 560; // FIXME: this value is how many times it 'ticks' per 1 revolution. try and find out from online sources on our motors
+
+    private static final double WHEEL_DIAMETER_INCHES = 3.5; // FIXME: measure real diameter
     private static final double COUNTS_PER_INCH =
             (COUNTS_PER_MOTOR_REV) / (WHEEL_DIAMETER_INCHES * Math.PI);
 
+
     // Movement defaults
-    private static final double DRIVE_POWER = 0.6;
-    private static final double STRAFE_POWER = 0.5;
-    private static final double TURN_POWER = 0.5;
+    private static final double DRIVE_POWER = 0.6; // FIXME: tune for the robot
+    private static final double STRAFE_POWER = 0.5; // FIXME: tune for the robot
+    private static final double TURN_POWER = 0.5; // FIXME: tune for the robot
 
     @Override
     public void runOpMode() {
@@ -258,7 +270,7 @@ public class BallChase extends LinearOpMode {
                 // if close enough, run intake to grab
                 if (closest.width * closest.height >= targetArea) {
                     intakeOn();
-                    sleep(300); // give time to intake
+                    sleep(300); // FIXME: tweak intake timing for the robot
                     intakeOff();
                     grabbed = true;
                     stopAll();
@@ -438,7 +450,7 @@ public class BallChase extends LinearOpMode {
         launch.setPosition(1);
         telemetry.addLine("Shooting...");
         telemetry.update();
-        sleep(700);
+        sleep(700); // FIXME: adjust shooting time / servo positions
         outtakeSystem.stop();
         launch.setPosition(0.1);
         telemetry.addLine("Shot done");
