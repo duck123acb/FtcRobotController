@@ -41,7 +41,6 @@ public class TeleOpMecanum extends LinearOpMode {
         frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
         backRight.setDirection(DcMotorSimple.Direction.REVERSE);
         rightOuttake.setDirection(DcMotorSimple.Direction.REVERSE);
-        rightIntake.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // initialize systems
 
