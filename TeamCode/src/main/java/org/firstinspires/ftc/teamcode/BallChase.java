@@ -5,7 +5,12 @@ import com.qualcomm.hardware.dfrobot.HuskyLens;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.teamcode.systems.TakeSystem;
+
 
 /**
  * Mid-level DECODE autonomous:
@@ -13,23 +18,26 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * - Known ball positions are pre-mapped (in inches) per ball ID
  * - Mecanum encoder moves + IMU heading hold
  * - Intake/shooter hooks left as simple methods to implement
- *
  * TUNE: wheel/encoder constants, distances, and PID gains after first runs.
  */
 @Autonomous(name = "BallChase_Decode_Mid")
 public class BallChase extends LinearOpMode {
-    // Vision
     private HuskyLens huskylens;
 
     // Drivetrain
     private DcMotor leftFront, rightFront, leftBack, rightBack;
+    DcMotor leftIntake, rightIntake;
+    DcMotor leftOuttake, rightOuttake;
+
+    Servo launch;
+
+    TakeSystem intakeSystem, outtakeSystem;
+
 
     // IMU
     private BNO055IMU imu;
-
     // PID controllers
     private final PID headingPID = new PID(0.01, 0.0, 0.0005); // tune for turnToAngle
-    private final PID forwardVisionPID = new PID(0.005, 0.0, 0.0); // kept if needed
 
     // Tag -> ball order (IDs from HuskyLens are 1..3)
     private static final int[][] ballOrders = {
@@ -37,7 +45,6 @@ public class BallChase extends LinearOpMode {
             {1, 2, 1}, // tag 2
             {1, 1, 2}  // tag 3
     };
-    private int[] ballOrder = null;
 
     // Pre-mapped ball pickup poses (inches) relative to your starting pose.
     // Index is ball ID-1. Fill these with your field measurements.
@@ -75,7 +82,7 @@ public class BallChase extends LinearOpMode {
             telemetry.update();
             tag = 1;
         }
-        ballOrder = ballOrders[tag - 1];
+        int[] ballOrder = ballOrders[tag - 1];
         telemetry.addData("Pattern", "tag=%d order=%s", tag, java.util.Arrays.toString(ballOrder));
         telemetry.update();
 
@@ -118,10 +125,21 @@ public class BallChase extends LinearOpMode {
         leftBack = hardwareMap.get(DcMotor.class, "leftBack");
         rightBack = hardwareMap.get(DcMotor.class, "rightBack");
 
+        leftIntake = hardwareMap.get(DcMotor.class, "leftIntakeMotor");
+        rightIntake = hardwareMap.get(DcMotor.class, "rightIntakeMotor");
+        leftOuttake = hardwareMap.get(DcMotor.class, "leftOuttakeMotor");
+        rightOuttake = hardwareMap.get(DcMotor.class, "rightOuttakeMotor");
+        launch = hardwareMap.get(Servo.class, "launchServo");
+
+        rightOuttake.setDirection(DcMotorSimple.Direction.REVERSE);
+
         leftFront.setDirection(DcMotor.Direction.FORWARD);
         leftBack.setDirection(DcMotor.Direction.FORWARD);
         rightFront.setDirection(DcMotor.Direction.REVERSE);
         rightBack.setDirection(DcMotor.Direction.REVERSE);
+
+        intakeSystem = new TakeSystem(leftIntake, rightIntake);
+        outtakeSystem = new TakeSystem(leftOuttake, rightOuttake);
 
         // Reset encoders
         resetAndRunUsingEncoders();
@@ -194,7 +212,7 @@ public class BallChase extends LinearOpMode {
 
         // Strafe (positive strafe right, negative left)
         if (Math.abs(strafe) > 1.0) {
-            strafeInches(strafe, STRAFE_POWER);
+            strafeInches(strafe);
         }
 
         // Rotate to heading
@@ -232,7 +250,7 @@ public class BallChase extends LinearOpMode {
                 double forwardPower = clamp(0.0002 * forwardError, -0.35, 0.35);
 
                 // apply mecanum forward + rotation (no strafe here)
-                mecanumDrive(forwardPower, 0.0, turn);
+                mecanumDrive(forwardPower, turn);
 
                 telemetry.addData("Aligning", "x=%d area=%d", closest.x, closest.width * closest.height);
                 telemetry.update();
@@ -297,8 +315,9 @@ public class BallChase extends LinearOpMode {
         leftBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        setMotorPowers(Math.signum(inches) * Math.abs(power),
-                Math.signum(inches) * Math.abs(power));
+        double left = Math.signum(inches) * Math.abs(power);
+        setMotorPowers(left,
+                left);
 
         // simple timeout
         ElapsedTime t = new ElapsedTime();
@@ -316,7 +335,7 @@ public class BallChase extends LinearOpMode {
      * Strafes right (positive) or left (negative) by inches. Mecanum approximation using same counts.
      * TUNE this method — strafing counts depend on gearing and wheel friction.
      */
-    private void strafeInches(double inches, double power) {
+    private void strafeInches(double inches) {
         int counts = (int) Math.round(inches * COUNTS_PER_INCH);
 
         // mecanum strafing target:
@@ -335,8 +354,9 @@ public class BallChase extends LinearOpMode {
         leftBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        setMotorPowers(Math.signum(inches) * Math.abs(power),
-                Math.signum(inches) * Math.abs(power));
+        double left = Math.signum(inches) * Math.abs(BallChase.STRAFE_POWER);
+        setMotorPowers(left,
+                left);
 
         ElapsedTime t = new ElapsedTime();
         while (opModeIsActive() && (leftFront.isBusy() || rightFront.isBusy() || leftBack.isBusy() || rightBack.isBusy())
@@ -379,12 +399,12 @@ public class BallChase extends LinearOpMode {
     }
 
     // mecanum drive: forward, strafe, rotate (-1..1)
-    private void mecanumDrive(double forward, double strafe, double rotate) {
+    private void mecanumDrive(double forward, double rotate) {
         // Basic decomposition for 4-motor mecanum
-        double lf = forward + strafe + rotate;
-        double rf = forward - strafe - rotate;
-        double lb = forward - strafe + rotate;
-        double rb = forward + strafe - rotate;
+        double lf = forward + 0.0 + rotate;
+        double rf = forward - 0.0 - rotate;
+        double lb = forward - 0.0 + rotate;
+        double rb = forward + 0.0 - rotate;
 
         // normalize
         double max = Math.max(Math.max(Math.abs(lf), Math.abs(rf)),
@@ -402,22 +422,25 @@ public class BallChase extends LinearOpMode {
     // ------------------------- Intake & Shoot (placeholders) ----------------
 
     private void intakeOn() {
-        // TODO: start intake motor(s)
+        intakeSystem.spin(1);
         telemetry.addLine("intake on");
         telemetry.update();
     }
 
     private void intakeOff() {
-        // TODO: stop intake motor(s)
+        intakeSystem.stop();
         telemetry.addLine("intake off");
         telemetry.update();
     }
 
     private void shootSequence() {
-        // TODO: implement your shooter (flywheel, wheel, servo, whatever)
+        outtakeSystem.spin(1);
+        launch.setPosition(1);
         telemetry.addLine("Shooting...");
         telemetry.update();
         sleep(700);
+        outtakeSystem.stop();
+        launch.setPosition(0.1);
         telemetry.addLine("Shot done");
         telemetry.update();
     }
@@ -461,7 +484,6 @@ public class BallChase extends LinearOpMode {
     }
 
     private double angleDiff(double target, double current) {
-        double d = normalizeAngle(target - current);
-        return d;
+        return normalizeAngle(target - current);
     }
 }
