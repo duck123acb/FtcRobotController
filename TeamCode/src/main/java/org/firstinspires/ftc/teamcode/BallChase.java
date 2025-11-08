@@ -3,7 +3,6 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.hardware.dfrobot.HuskyLens;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
 @Autonomous(name = "HuskyLensTest")
@@ -14,8 +13,8 @@ public class BallChase extends LinearOpMode {
     private DcMotor leftFront, rightFront, leftBack, rightBack;
 
     // PID controllers
-    private PID turnPID = new PID(0.01, 0.0, 0.001);
-    private PID forwardPID = new PID(0.005, 0.0, 0.0);
+    final private PID turnPID = new PID(0.01, 0.0, 0.001);
+    final private PID forwardPID = new PID(0.005, 0.0, 0.0);
 
     // Tag → ball sequences
     final static int[][] ballOrders = {
