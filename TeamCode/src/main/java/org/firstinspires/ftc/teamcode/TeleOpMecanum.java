@@ -37,13 +37,11 @@ public class TeleOpMecanum extends LinearOpMode {
         launch = hardwareMap.get(Servo.class, "launchServo");
 
         // set motor directions
-
         frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
         backRight.setDirection(DcMotorSimple.Direction.REVERSE);
         rightOuttake.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // initialize systems
-
         driveSystem = new DriveSystem(frontLeft, frontRight, backLeft, backRight);
         intakeSystem = new TakeSystem(leftIntake, rightIntake);
         outtakeSystem = new TakeSystem(leftOuttake, rightOuttake);
@@ -80,16 +78,18 @@ public class TeleOpMecanum extends LinearOpMode {
             else
                 launch.setPosition(.2);
 
+            // why doesnt this work :(
             if (gamepad1.aWasPressed())
                 intakePower *= -1;
 
-
+            // rounding for readability
             double roundedPower = Math.round(outtakePower * 100.0) / 100.0;
             telemetry.addData("Outtake Power", "%.2f", roundedPower);
             telemetry.update();
 
         }
 
+        // although generally not java standard im not a java programmer so screw you
         intakeSystem.stop();
         outtakeSystem.stop();
     }
