@@ -433,7 +433,14 @@ public class BallChase extends LinearOpMode {
         telemetry.update();
     }
 
+    private void turnBy(double deltaAngle) {
+        double current = imu.getAngularOrientation().firstAngle;
+        double target = current + deltaAngle;
+        turnToAngle(target);
+    }
+
     private void shootSequence() {
+        turnBy(180);
         outtakeSystem.spin(1);
         launch.setPosition(1);
         telemetry.addLine("Shooting...");
@@ -441,6 +448,7 @@ public class BallChase extends LinearOpMode {
         sleep(700); // FIXME: adjust shooting time / servo positions
         outtakeSystem.stop();
         launch.setPosition(0.1);
+        turnBy(180);
         telemetry.addLine("Shot done");
         telemetry.update();
     }
