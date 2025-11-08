@@ -55,11 +55,9 @@ public class BallChase extends LinearOpMode {
         // find order
         while (opModeIsActive() && ballOrder == null) {
             int id = SetAprilTag();
-            if (id >= 21 && id <= 23) { // valid tag
-                ballOrder = ballOrders[id - 21]; // map 21->0, 22->1, 23->2
-                telemetry.addData("Ball Order Set", "Tag %d -> Order: %s", id, java.util.Arrays.toString(ballOrder));
-                telemetry.update();
-            }
+            ballOrder = ballOrders[id - 1];
+            telemetry.addData("Ball Order Set", "Tag %d -> Order: %s", id, java.util.Arrays.toString(ballOrder));
+            telemetry.update();
         }
 
         int ballIndex = 0;
