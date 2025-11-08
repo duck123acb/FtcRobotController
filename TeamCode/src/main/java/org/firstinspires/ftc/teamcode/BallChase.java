@@ -306,7 +306,7 @@ public class BallChase extends LinearOpMode {
         turnToAngle(0.0);
     }
 
-    // ------------------------- Drive primitives --------------------------
+    // Drive primitive functions
 
     private void driveStraightInches(double inches, double power) {
         int counts = (int) Math.round(inches * COUNTS_PER_INCH);
@@ -335,7 +335,6 @@ public class BallChase extends LinearOpMode {
         ElapsedTime t = new ElapsedTime();
         while (opModeIsActive() && (leftFront.isBusy() || rightFront.isBusy() || leftBack.isBusy() || rightBack.isBusy())
                 && t.seconds() < Math.max(2.0, Math.abs(inches) / 5.0) ) {
-            // Optional: maintain heading correction here using IMU if you want
             idle();
         }
 
@@ -343,10 +342,7 @@ public class BallChase extends LinearOpMode {
         resetAndRunUsingEncoders();
     }
 
-    /**
-     * Strafes right (positive) or left (negative) by inches. Mecanum approximation using same counts.
-     * TUNE this method — strafing counts depend on gearing and wheel friction.
-     */
+    // Strafes right (positive) or left (negative) by inches. Mecanum approximation using same counts.
     private void strafeInches(double inches) {
         int counts = (int) Math.round(inches * COUNTS_PER_INCH);
 
@@ -380,9 +376,7 @@ public class BallChase extends LinearOpMode {
         resetAndRunUsingEncoders();
     }
 
-    /**
-     * Simple IMU-based rotate to absolute heading (degrees). Uses headingPID to stabilize.
-     */
+     // Simple IMU-based rotate to absolute heading (degrees). Uses headingPID to stabilize.
     private void turnToAngle(double targetHeading) {
         // normalize target to -180..180
         targetHeading = normalizeAngle(targetHeading);
@@ -431,7 +425,7 @@ public class BallChase extends LinearOpMode {
         rightBack.setPower(rb);
     }
 
-    // ------------------------- Intake & Shoot (placeholders) ----------------
+    // Intake & Shoot (placeholders)
 
     private void intakeOn() {
         intakeSystem.spin(1);
