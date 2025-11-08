@@ -39,7 +39,6 @@ public class BallChase extends LinearOpMode {
 
             chaseBall(targetID);
 
-            // Loop forever through ball order
             ballIndex = (ballIndex + 1) % ballOrder.length;
         }
     }
