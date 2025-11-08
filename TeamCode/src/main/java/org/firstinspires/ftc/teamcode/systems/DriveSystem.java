@@ -14,8 +14,8 @@ public class DriveSystem {
 
     public void drive(Gamepad gamepad) {
         double y = gamepad.left_stick_y;   // forward/backward
-        double x = gamepad.left_stick_x;    // strafe left/right
-        double rx = gamepad.right_stick_x;  // rotate right/left
+        double x = -gamepad.left_stick_x;    // strafe left/right
+        double rx = -gamepad.right_stick_x;  // rotate right/left
 
         // basic mecanum drive math
         double fl = y + x + rx;
