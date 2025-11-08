@@ -123,8 +123,7 @@ public class BallChase extends LinearOpMode {
         telemetry.update();
     }
 
-    // ------------------------- Initialization ----------------------------
-
+    // Initialization
     private void initHardware() {
         // HuskyLens
         huskylens = hardwareMap.get(HuskyLens.class, "huskylens");
@@ -179,8 +178,7 @@ public class BallChase extends LinearOpMode {
         rightBack.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
-    // ------------------------- Tag reading --------------------------------
-
+    // Tag reading
     private int readStartTag() {
         huskylens.selectAlgorithm(HuskyLens.Algorithm.TAG_RECOGNITION);
         // loop a few times to give sensor a chance
@@ -200,8 +198,7 @@ public class BallChase extends LinearOpMode {
         return -1;
     }
 
-    // ------------------------- Ball spot helpers --------------------------
-
+    // Ball helpers
     private double[] getBallSpot(int ballID) {
         // ballID is 1..3; array index 0..2
         return ballSpots[ballID - 1];
@@ -231,8 +228,7 @@ public class BallChase extends LinearOpMode {
         turnToAngle(heading);
     }
 
-    // ------------------------- Vision align + intake ----------------------
-
+    // Vision align + intake
     /**
      * Small vision-based alignment using HuskyLens color recognition to nudge into perfect pickup pose.
      * If the ball is not visible quickly, the method returns and we assume position is close enough.
@@ -285,8 +281,7 @@ public class BallChase extends LinearOpMode {
         stopAll();
     }
 
-    // ------------------------- Shooting flow ------------------------------
-
+    // Shooting flow
     private void goToShootingSpotAndShoot() {
         // Back off a little from ball zone (so we can orient freely)
         driveStraightInches(-6.0, 0.3); // back up 6 inches
@@ -307,7 +302,6 @@ public class BallChase extends LinearOpMode {
     }
 
     // Drive primitive functions
-
     private void driveStraightInches(double inches, double power) {
         int counts = (int) Math.round(inches * COUNTS_PER_INCH);
 
