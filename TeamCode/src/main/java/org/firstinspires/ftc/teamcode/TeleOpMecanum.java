@@ -4,6 +4,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.Servo;
+
 
 import org.firstinspires.ftc.teamcode.systems.*;
 
@@ -13,10 +15,13 @@ public class TeleOpMecanum extends LinearOpMode {
     DcMotor leftIntake, rightIntake;
     DcMotor leftOuttake, rightOuttake;
 
+    Servo launch;
+
     DriveSystem driveSystem;
     TakeSystem intakeSystem, outtakeSystem;
 
     double outtakePower = 1;
+    int intakePower = 1;
 
     @Override
     public void runOpMode() {
@@ -29,11 +34,16 @@ public class TeleOpMecanum extends LinearOpMode {
         rightIntake = hardwareMap.get(DcMotor.class, "rightIntakeMotor");
         leftOuttake = hardwareMap.get(DcMotor.class, "leftOuttakeMotor");
         rightOuttake = hardwareMap.get(DcMotor.class, "rightOuttakeMotor");
+        launch = hardwareMap.get(Servo.class, "launchServo");
+
+        // set motor directions
 
         frontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
         backLeft.setDirection(DcMotorSimple.Direction.REVERSE);
         rightOuttake.setDirection(DcMotorSimple.Direction.REVERSE);
         rightIntake.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        // initialize systems
 
         driveSystem = new DriveSystem(frontLeft, frontRight, backLeft, backRight);
         intakeSystem = new TakeSystem(leftIntake, rightIntake);
@@ -54,7 +64,7 @@ public class TeleOpMecanum extends LinearOpMode {
 
             driveSystem.drive(gamepad2);
 
-            intakeSystem.spin(1);
+            intakeSystem.spin(intakePower);
 
             if (gamepad2.y)
                 outtakeSystem.spin(outtakePower);
@@ -65,6 +75,14 @@ public class TeleOpMecanum extends LinearOpMode {
                 outtakePower = Math.min(outtakePower + 0.2, 1);
             else if (gamepad2.dpadDownWasPressed())
                 outtakePower = Math.max(outtakePower - 0.2, 0);
+
+            if (gamepad2.b)
+                launch.setPosition(-1.5);
+            else
+                launch.setPosition(.2);
+
+            if (gamepad1.aWasPressed())
+                intakePower *= -1;
 
 
             double roundedPower = Math.round(outtakePower * 100.0) / 100.0;
