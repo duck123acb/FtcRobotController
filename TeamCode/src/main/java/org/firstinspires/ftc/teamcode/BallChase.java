@@ -45,10 +45,7 @@ public class BallChase extends LinearOpMode {
         }
     }
 
-    // ----------------------------------------------------
-    //                SETUP + INIT FUNCTIONS
-    // ----------------------------------------------------
-
+    // SETUP + INITIALIZATION
     private void initHardware() {
         // HuskyLens
         huskylens = hardwareMap.get(HuskyLens.class, "huskylens");
@@ -79,10 +76,7 @@ public class BallChase extends LinearOpMode {
         }
     }
 
-    // ----------------------------------------------------
-    //            MAIN BALL CHASE LOGIC
-    // ----------------------------------------------------
-
+    // MAIN BALL CHASE
     private void chaseBall(int targetID) {
         boolean reached = false;
 
@@ -128,10 +122,7 @@ public class BallChase extends LinearOpMode {
         return ball.width * ball.height >= targetArea;
     }
 
-    // ----------------------------------------------------
-    //                   HELPER METHODS
-    // ----------------------------------------------------
-
+    // HELPER METHODS
     private int readAprilTag() {
         huskylens.selectAlgorithm(HuskyLens.Algorithm.TAG_RECOGNITION);
         HuskyLens.Block[] blocks = huskylens.blocks();
