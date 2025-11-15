@@ -88,7 +88,7 @@ public class BallChase extends LinearOpMode {
         waitForStart();
 
         // 1) Read tag and get order
-        int tag = readStartTag(); // returns 1..3
+        int tag = readStartTag();
         if (tag < 1 || tag > 3) {
             telemetry.addLine("No valid tag found; defaulting to tag 1");
             telemetry.update();
@@ -104,7 +104,7 @@ public class BallChase extends LinearOpMode {
             telemetry.addData("Next Ball", "ID=%d", ballID);
             telemetry.update();
 
-            double[] pose = getBallSpot(ballID);
+            double[] pose = ballSpots[ballID - 1];
             // drive to approximate spot using encoders (forward then strafe)
             driveToApproxSpot(pose);
 
@@ -199,11 +199,6 @@ public class BallChase extends LinearOpMode {
     }
 
     // Ball helpers
-    private double[] getBallSpot(int ballID) {
-        // ballID is 1..3; array index 0..2
-        return ballSpots[ballID - 1];
-    }
-
     /**
      * driveToApproxSpot:
      *   1) drive forward/back to approximate forward distance

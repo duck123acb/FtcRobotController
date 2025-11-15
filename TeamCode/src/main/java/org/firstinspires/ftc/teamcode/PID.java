@@ -21,6 +21,22 @@ public class PID {
         timer.reset();
     }
 
+    /**
+     * Updates the PID controller output based on the target and current values.
+     * <p>
+     * This method computes the proportional, integral, and derivative terms
+     * using the elapsed time since the last update. Integral windup is prevented
+     * by clamping the accumulated error within the defined limits.
+     *
+     * @param target the desired setpoint value
+     * @param current the current measured value
+     * @return the computed PID controller output
+     *
+     * @implNote
+     * - The method automatically handles cases where the elapsed time (dt) is zero
+     *   by substituting a small default value (1e-3 seconds).
+     * - The timer used should measure the time between successive calls to this method.
+     */
     public double update(double target, double current) {
         double dt = timer.seconds();
         if (dt <= 0) dt = 1e-3; // safety to not divide by zero
@@ -56,6 +72,18 @@ public class PID {
         return lastOutput;
     }
 
+    /**
+     * Constrains a value to lie within a specified minimum and maximum range.
+     * <p>
+     * If the given value is less than {@code min}, {@code min} is returned.
+     * If it is greater than {@code max}, {@code max} is returned.
+     * Otherwise, the original value is returned.
+     *
+     * @param val the value to be clamped
+     * @param min the minimum allowable value
+     * @param max the maximum allowable value
+     * @return the clamped value within the range [{@code min}, {@code max}]
+     */
     private double clamp(double val, double min, double max) {
         return Math.max(min, Math.min(max, val));
     }
