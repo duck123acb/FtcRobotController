@@ -1,0 +1,16 @@
+{
+  "name": "ftc-robot-visualizer",
+  "version": "1.0.0",
+  "description": "A simple visualizer for the FTC robot simulation.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "ws": "^8.2.3",
+    "dgram": "^1.0.1"
+  },
+  "author": "",
+  "license": "ISC"
+}
