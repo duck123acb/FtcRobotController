@@ -6,9 +6,6 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 
-
-import org.firstinspires.ftc.teamcode.systems.*;
-
 @TeleOp(name="TeleOp - Mecanum (Linear)")
 public class TeleOpMecanum extends LinearOpMode {
     DcMotor frontLeft, frontRight, backLeft, backRight;
