@@ -1,11 +1,11 @@
-package com.duck123acb.robotcore.systems;
+package org.firstinspires.ftc.teamcode.TeleOp;
 
-import com.duck123acb.robotcore.Motor;
+import com.qualcomm.robotcore.hardware.DcMotor;
 
 public class TakeSystem {
-    Motor leftMotor, rightMotor;
+    DcMotor leftMotor, rightMotor;
 
-    public TakeSystem(Motor leftMotor, Motor rightMotor) {
+    public TakeSystem(DcMotor leftMotor, DcMotor rightMotor) {
         this.leftMotor = leftMotor;
         this.rightMotor = rightMotor;
     }
