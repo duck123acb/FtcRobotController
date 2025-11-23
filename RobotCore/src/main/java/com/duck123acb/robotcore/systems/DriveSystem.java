@@ -198,4 +198,33 @@ public class DriveSystem {
     public RobotState getRobotState() {
         return robotState;
     }
+
+    public void driveMecanum(double x, double y, double turn) {
+        double fl = y + x + turn;
+        double fr = y - x - turn;
+        double bl = y - x + turn;
+        double br = y + x - turn;
+
+        frontLeft.setPower(fl);
+        frontRight.setPower(fr);
+        backLeft.setPower(bl);
+        backRight.setPower(br);
+    }
+    public void updateSim(double dt) {
+        // pull motor power
+        double fl = frontLeft.getPower();
+        double fr = frontRight.getPower();
+        double bl = backLeft.getPower();
+        double br = backRight.getPower();
+
+        // lightweight kinematic approximation
+        double vx = (fl + fr + bl + br) / 4.0;
+        double vy = (fl - fr - bl + br) / 4.0;
+        double omega = (fl - fr + bl - br) / 4.0;
+
+        RobotState s = getRobotState();
+        s.x += vx * dt;
+        s.y += vy * dt;
+        s.heading += omega * dt;
+    }
 }
