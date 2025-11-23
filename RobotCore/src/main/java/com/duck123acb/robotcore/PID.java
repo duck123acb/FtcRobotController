@@ -1,88 +1,114 @@
 package com.duck123acb.robotcore;
 
-import com.qualcomm.robotcore.util.ElapsedTime;
-
+/**
+ * A lightweight, FTC-independent PID controller using real-time delta calculations.
+ * Tracks proportional, integral, and derivative components with anti-windup.
+ */
 public class PID {
+
+    /** Proportional, integral, and derivative gains. */
     private double kp, ki, kd;
 
+    /** Accumulated integral term (clamped). */
     private double integralSum = 0;
+
+    /** Last cycle's error value, used for derivative. */
     private double lastError = 0;
+
+    /** Most recently computed PID output. */
     private double lastOutput = 0;
 
-    private final ElapsedTime timer = new ElapsedTime();
+    /** Maximum magnitude allowed for the integral term. */
+    private double integralLimit = 1.0;
 
-    // to avoid integral going crazy
-    private double integralLimit = 1.0; // tweak if needed
+    /** Timestamp (nanoseconds) from the previous update. */
+    private long lastTime = System.nanoTime();
 
+    /**
+     * Create a new PID controller.
+     *
+     * @param kp proportional gain
+     * @param ki integral gain
+     * @param kd derivative gain
+     */
     public PID(double kp, double ki, double kd) {
         this.kp = kp;
         this.ki = ki;
         this.kd = kd;
-        timer.reset();
     }
 
     /**
-     * Updates the PID controller output based on the target and current values.
-     * <p>
-     * This method computes the proportional, integral, and derivative terms
-     * using the elapsed time since the last update. Integral windup is prevented
-     * by clamping the accumulated error within the defined limits.
+     * Computes a single PID update based on the target and current measurement.
      *
      * @param target the desired setpoint value
      * @param current the current measured value
-     * @return the computed PID controller output
+     * @return the PID output for this timestep
      *
-     * @implNote
-     * - The method automatically handles cases where the elapsed time (dt) is zero
-     *   by substituting a small default value (1e-3 seconds).
-     * - The timer used should measure the time between successive calls to this method.
+     * Notes:
+     * - Uses System.nanoTime() to compute an accurate delta time (dt).
+     * - dt is converted to seconds.
+     * - If dt is zero or negative, a small fallback dt is used.
+     * - Integral term is clamped to prevent windup.
      */
     public double update(double target, double current) {
-        double dt = timer.seconds();
-        if (dt <= 0) dt = 1e-3; // safety to not divide by zero
+        long now = System.nanoTime();
+        double dt = (now - lastTime) / 1e9; // convert ns → seconds
+
+        if (dt <= 0) dt = 1e-3;
 
         double error = target - current;
 
-        // integral with anti-windup
+        // Compute integral (with anti-windup)
         integralSum += error * dt;
         integralSum = clamp(integralSum, -integralLimit, integralLimit);
 
+        // Derivative term
         double derivative = (error - lastError) / dt;
 
+        // PID output
         double output = (kp * error) + (ki * integralSum) + (kd * derivative);
 
+        // Update stored values for next cycle
         lastError = error;
         lastOutput = output;
-        timer.reset();
+        lastTime = now;
 
         return output;
     }
 
+    /**
+     * Reset all internal PID tracking: integral, derivative history, and timer.
+     */
     public void reset() {
         integralSum = 0;
         lastError = 0;
-        timer.reset();
+        lastOutput = 0;
+        lastTime = System.nanoTime();
     }
 
+    /**
+     * Set the maximum magnitude for the integral accumulation.
+     *
+     * @param limit max allowed absolute integral value
+     */
     public void setIntegralLimit(double limit) {
         this.integralLimit = limit;
     }
 
+    /**
+     * @return the latest output returned by the update() function
+     */
     public double getLastOutput() {
         return lastOutput;
     }
 
     /**
-     * Constrains a value to lie within a specified minimum and maximum range.
-     * <p>
-     * If the given value is less than {@code min}, {@code min} is returned.
-     * If it is greater than {@code max}, {@code max} is returned.
-     * Otherwise, the original value is returned.
+     * Clamp a value between a minimum and maximum.
      *
-     * @param val the value to be clamped
-     * @param min the minimum allowable value
-     * @param max the maximum allowable value
-     * @return the clamped value within the range [{@code min}, {@code max}]
+     * @param val the value to clamp
+     * @param min minimum allowed
+     * @param max maximum allowed
+     * @return val constrained to the [min, max] range
      */
     private double clamp(double val, double min, double max) {
         return Math.max(min, Math.min(max, val));
