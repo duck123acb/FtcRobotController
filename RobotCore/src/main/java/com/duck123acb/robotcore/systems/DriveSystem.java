@@ -1,6 +1,7 @@
 package com.duck123acb.robotcore.systems;
 
 import com.duck123acb.robotcore.Motor;
+import com.duck123acb.robotcore.RobotState;
 
 /**
  * DriveSystem handles all robot movement for FTC DECODE.
@@ -14,17 +15,15 @@ import com.duck123acb.robotcore.Motor;
  * - Encoder and power helpers
  */
 public class DriveSystem {
+    // Estimated robot state (for sim / odometry tracking)
+    RobotState robotState;
+
     Motor frontLeft, frontRight, backLeft, backRight;
 
     // Physical constants
     private final double TICKS_PER_REV;
     private final double WHEEL_DIAMETER_INCHES;
     private final double WHEEL_CIRCUMFERENCE;
-
-    // Estimated robot state (for sim / odometry tracking)
-    private double posX = 0;
-    private double posY = 0;
-    private double heading = 0; // radians, 0 = forward
 
     /**
      * Constructor for DriveSystem
@@ -41,6 +40,7 @@ public class DriveSystem {
         backLeft = bl;
         backRight = br;
 
+        robotState = new RobotState(0, 0, 0);
         this.TICKS_PER_REV = ticksPerRev;
         this.WHEEL_DIAMETER_INCHES = wheelDiameterInches;
         this.WHEEL_CIRCUMFERENCE = Math.PI * wheelDiameterInches;
@@ -66,15 +66,15 @@ public class DriveSystem {
      */
     public void goToXY(double targetX, double targetY, double power) {
         // Compute delta
-        double deltaX = targetX - posX;
-        double deltaY = targetY - posY;
+        double deltaX = targetX - robotState.x;
+        double deltaY = targetY - robotState.y;
 
         // Compute distance and heading
         double distance = Math.hypot(deltaX, deltaY);
         double targetAngle = Math.atan2(deltaY, deltaX);
 
         // Rotate to face target
-        double turnAngle = targetAngle - heading;
+        double turnAngle = targetAngle - robotState.heading;
         turnRadians(turnAngle, power * 0.5); // slower turn for accuracy
 
         // Move forward
@@ -82,9 +82,9 @@ public class DriveSystem {
         goToPosition(ticksToMove, power);
 
         // Update simulated/estimated state
-        posX = targetX;
-        posY = targetY;
-        heading = targetAngle;
+        robotState.x = targetX;
+        robotState.y = targetY;
+        robotState.heading = targetAngle;
     }
 
     /**
@@ -103,7 +103,7 @@ public class DriveSystem {
         runToPosition();
         setPower(power);
 
-        heading += radians;
+        robotState.heading += radians;
     }
 
     /**
@@ -193,5 +193,9 @@ public class DriveSystem {
      */
     private int inchesToTicks(double inches) {
         return (int)((inches / WHEEL_CIRCUMFERENCE) * TICKS_PER_REV);
+    }
+
+    public RobotState getRobotState() {
+        return robotState;
     }
 }

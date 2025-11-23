@@ -16,4 +16,8 @@ public class Robot {
         intakeSystem = new TakeSystem(il, ir);
         outtakeSystem = new TakeSystem(ol, or);
     }
+
+    RobotState getState() {
+        return driveSystem.getRobotState();
+    }
 }
