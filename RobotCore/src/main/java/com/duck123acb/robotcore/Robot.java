@@ -8,7 +8,6 @@ MECANUM WHEEL ROBOT
 INTAKE/OUTTAKE
 */
 public class Robot {
-
     DriveSystem driveSystem;
     TakeSystem intakeSystem, outtakeSystem;
 
@@ -30,7 +29,7 @@ public class Robot {
         pidHeading = new PID(2.0, 0, 0.1);
     }
 
-    RobotState getState() {
+    public RobotState getState() {
         return driveSystem.getRobotState();
     }
 
@@ -59,7 +58,7 @@ public class Robot {
 
         // send to mecanum mixer
         driveSystem.driveMecanum(robotX, robotY, omega);
-//        driveSystem.updateSim();
+        driveSystem.updateSim(0.02);
 
     }
 }

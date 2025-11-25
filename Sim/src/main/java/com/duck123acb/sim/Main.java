@@ -1,5 +1,9 @@
 package com.duck123acb.sim;
 
+import com.duck123acb.robotcore.Motor;
+import com.duck123acb.robotcore.Robot;
+import com.duck123acb.robotcore.RobotState;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -11,11 +15,23 @@ public class Main {
         // -------------------------------------------------------------
         // ROBOT INITIAL STATE
         // -------------------------------------------------------------
-        UdpClient.RobotState robot = new UdpClient.RobotState(
-                0,    // x
-                0,    // y
-                0     // heading deg
-        );
+        UdpClient.RobotState udpRobot = new UdpClient.RobotState(0, 0, 0);
+
+
+        // drivetrain motors
+        Motor fl = new FakeMotor();
+        Motor fr = new FakeMotor();
+        Motor bl = new FakeMotor();
+        Motor br = new FakeMotor();
+        // intake/outtake
+        Motor il = new FakeMotor();
+        Motor ir = new FakeMotor();
+        Motor ol = new FakeMotor();
+        Motor or = new FakeMotor();
+
+        // create robot
+        Robot robot = new Robot(fl, fr, bl, br, il, ir, ol, or);
+
 
         // -------------------------------------------------------------
         // BALL ORDER (as would come from AprilTags)
@@ -67,14 +83,31 @@ public class Main {
         // -------------------------------------------------------------
         // SEND CONFIG TO VISUALIZER
         // -------------------------------------------------------------
-        client.sendConfig(robot, balls, baskets);
+        client.sendConfig(udpRobot, balls, baskets);
 
-        // -------------------------------------------------------------
-        // send an update to prove it's working
-        // -------------------------------------------------------------
-        robot.x = 5;
-        robot.heading = 45;
-        client.sendUpdate(robot);
+        // target: first ball
+        UdpClient.Ball firstBall = balls.get(0);
+
+        // simple sim loop
+        while (true) {
+            // move robot toward target
+            robot.goToXY_PID(firstBall.x, firstBall.y, 0);
+
+            // copy internal robot state to UDP visualizer
+            RobotState internal = robot.getState();
+            udpRobot.x = internal.x;
+            udpRobot.y = internal.y;
+            udpRobot.heading = internal.heading;
+
+            // send update to visualizer
+            client.sendUpdate(udpRobot);
+
+            double dx = firstBall.x - internal.x;
+            double dy = firstBall.y - internal.y;
+            if (Math.hypot(dx, dy) < 0.5) break;
+
+            Thread.sleep(20); // ~50Hz update
+        }
 
         client.close();
     }

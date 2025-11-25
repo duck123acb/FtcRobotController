@@ -7,43 +7,18 @@ public class FakeMotor implements Motor {
     private int targetPosition;
     private RunMode mode = RunMode.RUN_WITHOUT_ENCODER;
 
-    // tie this to your simulated robot's drivetrain
-    private final SimRobot robot;
-    private final boolean isLeft;
-
-    public FakeMotor(SimRobot robot, boolean isLeft) {
-        this.robot = robot;
-        this.isLeft = isLeft;
-    }
+    public FakeMotor() {}
 
     @Override
-    public void setPower(double power) {
-        this.power = power;
-        robot.applyMotorPower(isLeft, power);
-    }
-
+    public void setPower(double power) { this.power = power; }
     @Override
-    public double getPower() {
-        return power;
-    }
-
+    public double getPower() { return power; }
     @Override
-    public void setTargetPosition(int position) {
-        this.targetPosition = position;
-    }
-
+    public void setTargetPosition(int position) { this.targetPosition = position; }
     @Override
-    public int getTargetPosition() {
-        return targetPosition;
-    }
-
+    public int getTargetPosition() { return targetPosition; }
     @Override
-    public void setMode(RunMode mode) {
-        this.mode = mode;
-    }
-
+    public void setMode(Motor.RunMode mode) { this.mode = mode; }
     @Override
-    public RunMode getMode() {
-        return mode;
-    }
+    public RunMode getMode() { return mode; }
 }
