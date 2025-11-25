@@ -37,7 +37,7 @@ public class Robot {
     //                  PID XY + Heading Control
     // ============================================================
 
-    public void goToXY_PID(double targetX, double targetY, double targetHeading) {
+    public void goToXY_PID(double targetX, double targetY, double targetHeading, float speed) {
         RobotState state = driveSystem.getRobotState();
 
         double x = state.x;
@@ -45,16 +45,16 @@ public class Robot {
         double heading = state.heading;
 
         // PID outputs in FIELD space
-        double vx = pidX.update(targetX, x);
-        double vy = pidY.update(targetY, y);
+        double vx = pidX.update(targetX, x) * speed;
+        double vy = pidY.update(targetY, y) * speed;
         double omega = pidHeading.update(targetHeading, heading);
 
         // convert to ROBOT space (field-relative drive)
-        double cosH = Math.cos(heading);
-        double sinH = Math.sin(heading);
+        double radH = heading; // heading is already in radians
 
-        double robotX = vx * cosH - vy * sinH;
-        double robotY = vx * sinH + vy * cosH;
+
+        double robotX = vx * Math.sin(radH) - vy * Math.cos(radH);
+        double robotY = vx * Math.cos(radH) + vy * Math.sin(radH);
 
         // send to mecanum mixer
         driveSystem.driveMecanum(robotX, robotY, omega);

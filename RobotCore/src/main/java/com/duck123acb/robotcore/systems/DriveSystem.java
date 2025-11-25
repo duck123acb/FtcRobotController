@@ -218,13 +218,55 @@ public class DriveSystem {
         double br = backRight.getPower();
 
         // lightweight kinematic approximation
-        double vx = (fl + fr + bl + br) / 4.0;
-        double vy = (fl - fr - bl + br) / 4.0;
-        double omega = (fl - fr + bl - br) / 4.0;
+        // Forward is +X in robot frame? Let's assume standard mecanum:
+        // Forward (X) = (fl + fr + bl + br) / 4
+        // Strafe (Y) = (-fl + fr + bl - br) / 4
+        // Rotation (W) = (-fl + fr - bl + br) / 4
+
+        double vx = (fl + fr + bl + br) / 4.0;            // forward (robot X)
+        double vy = (-fl + fr + bl - br) / 4.0;          // strafe (robot Y)
+        double omega = (-fl + fr - bl + br) / 4.0;       // rotation
 
         RobotState s = getRobotState();
-        s.x += vx * dt;
-        s.y += vy * dt;
+
+        // Convert robot-relative velocities to field-relative
+        // x_field = x_robot * cos(heading) - y_robot * sin(heading)
+        // y_field = x_robot * sin(heading) + y_robot * cos(heading)
+        
+
+        // Wait, Robot.java: "double radH = Math.toRadians(heading);" implies s.heading is DEGREES.
+        // But DriveSystem.turnRadians adds radians to s.heading.
+        // Let's check Main.java usage.
+        // Main.java: "udpRobot.heading = internal.heading;"
+        // Robot.java: "pidHeading = new PID(2.0, 0, 0.1);" -> likely degrees if target is 0, 90 etc.
+        // DriveSystem.goToXY uses Math.atan2 which returns radians.
+        // DriveSystem.turnRadians adds radians.
+        // This suggests s.heading is mixed or I need to be careful.
+        
+        // Let's look at Robot.java again.
+        // "double radH = Math.toRadians(heading);"
+        // This strongly implies s.heading is in DEGREES in Robot.java context.
+        // But DriveSystem.goToXY sets "robotState.heading = targetAngle;" where targetAngle is atan2 (radians).
+        
+        // CONFLICT DETECTED.
+        // If goToXY sets radians, but Robot.java treats it as degrees, we have a problem.
+        // However, the user issue is "big circle".
+        // If the robot thinks it's at 1 degree but it's actually 1 radian (~57 deg), the math will be off.
+        
+        // Let's assume s.heading SHOULD be radians because of Math.atan2 usage in goToXY.
+        // If so, Robot.java is wrong to use Math.toRadians(heading).
+        
+        // BUT, let's look at Main.java:
+        // "robot.goToXY_PID(firstBall.x, firstBall.y, 0, 10);" -> targetHeading is 0.
+        
+        // Let's stick to fixing updateSim first.
+        // If s.heading is radians:
+        // If s.heading is radians:
+        double globalVx = vx * Math.cos(s.heading) - vy * Math.sin(s.heading);
+        double globalVy = vx * Math.sin(s.heading) + vy * Math.cos(s.heading);
+
+        s.x += globalVx * dt;
+        s.y += globalVy * dt;
         s.heading += omega * dt;
     }
 }

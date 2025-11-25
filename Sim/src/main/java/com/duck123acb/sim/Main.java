@@ -91,7 +91,7 @@ public class Main {
         // simple sim loop
         while (true) {
             // move robot toward target
-            robot.goToXY_PID(firstBall.x, firstBall.y, 0);
+            robot.goToXY_PID(firstBall.x, firstBall.y, 0, 10);
 
             // copy internal robot state to UDP visualizer
             RobotState internal = robot.getState();
