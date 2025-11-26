@@ -168,7 +168,7 @@ public class SimTest {
     }
 
     private static DriveSystem createDriveSystem() {
-        return new DriveSystem(new FakeMotor(), new FakeMotor(), new FakeMotor(), new FakeMotor(), 100, 4);
+        return new DriveSystem(new FakeMotor(), new FakeMotor(), new FakeMotor(), new FakeMotor(), 100, 4, 0, 0, 0);
     }
 
     private static void setPowers(DriveSystem drive, double fl, double fr, double bl, double br) {

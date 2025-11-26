@@ -17,9 +17,10 @@ public class Robot {
     private PID pidHeading;
 
     public Robot(Motor fl, Motor fr, Motor bl, Motor br,
-                 Motor il, Motor ir, Motor ol, Motor or) {
+                 Motor il, Motor ir, Motor ol, Motor or,
+                 double initialX, double initialY, double initialHeading) {
 
-        driveSystem = new DriveSystem(fl, fr, bl, br, 537.6, 4); // FIXME: measurements
+        driveSystem = new DriveSystem(fl, fr, bl, br, 537.6, 4, initialX, initialY, initialHeading); // FIXME: measurements
         intakeSystem = new TakeSystem(il, ir);
         outtakeSystem = new TakeSystem(ol, or);
 

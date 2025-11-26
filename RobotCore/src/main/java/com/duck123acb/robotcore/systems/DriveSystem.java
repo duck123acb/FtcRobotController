@@ -34,13 +34,14 @@ public class DriveSystem {
      * @param ticksPerRev Encoder ticks per wheel revolution
      * @param wheelDiameterInches Wheel diameter in inches
      */
-    public DriveSystem(Motor fl, Motor fr, Motor bl, Motor br, double ticksPerRev, double wheelDiameterInches) {
+    public DriveSystem(Motor fl, Motor fr, Motor bl, Motor br, double ticksPerRev, double wheelDiameterInches,
+                       double initialX, double initialY, double initialHeading) {
         frontLeft = fl;
         frontRight = fr;
         backLeft = bl;
         backRight = br;
 
-        robotState = new RobotState(0, 0, 0);
+        robotState = new RobotState(initialX, initialY, initialHeading);
         this.TICKS_PER_REV = ticksPerRev;
         this.WHEEL_DIAMETER_INCHES = wheelDiameterInches;
         this.WHEEL_CIRCUMFERENCE = Math.PI * wheelDiameterInches;

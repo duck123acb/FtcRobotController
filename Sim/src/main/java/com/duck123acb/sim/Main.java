@@ -4,6 +4,7 @@ import com.duck123acb.robotcore.Motor;
 import com.duck123acb.robotcore.Robot;
 import com.duck123acb.robotcore.RobotState;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -15,7 +16,7 @@ public class Main {
         // -------------------------------------------------------------
         // ROBOT INITIAL STATE
         // -------------------------------------------------------------
-        UdpClient.RobotState udpRobot = new UdpClient.RobotState(-60, -60, 0);
+        UdpClient.RobotState udpRobot = new UdpClient.RobotState(0, 0, 0);
 
 
         // drivetrain motors
@@ -30,8 +31,12 @@ public class Main {
         Motor or = new FakeMotor();
 
         // create robot
-        Robot robot = new Robot(fl, fr, bl, br, il, ir, ol, or);
-
+        // STARTING POSITION
+        double startX = 0;
+        double startY = -60;
+        double startHeading = 0;
+        
+        Robot robot = new Robot(fl, fr, bl, br, il, ir, ol, or, startX, startY, startHeading);
 
         // -------------------------------------------------------------
         // BALL ORDER (as would come from AprilTags)
@@ -47,30 +52,20 @@ public class Main {
         char[] chosen = motifs[rand.nextInt(motifs.length)];
 
 
-        List<UdpClient.Ball> balls = Arrays.asList(
-            /*
-            Ball	X (inches)	Y (inches)	Row/Column
-            1	-12	30	Top-left
-            2	0	30	Top-center
-            3	12	30	Top-right
-            4	-12	18	Middle-left
-            5	0	18	Middle-center
-            6	12	18	Middle-right
-            7	-12	6	Bottom-left
-            8	0	6	Bottom-center
-            9	12	6	Bottom-right
+        List<UdpClient.Ball> balls = new ArrayList<>(Arrays.asList(
+            new UdpClient.Ball(1, -12, 6,  'g'),
+            new UdpClient.Ball(2,   0,  6,  'p'),
+            new UdpClient.Ball(3,  12,  6,  'g'),
 
-             */
-            new UdpClient.Ball(1,  -12, 30, 'g'),
-            new UdpClient.Ball(2,   0, 30, 'p'),
-            new UdpClient.Ball(3,  12, 30, 'g'),
             new UdpClient.Ball(4, -12, 18, 'p'),
-            new UdpClient.Ball(5,  0, 18, 'g'),
+            new UdpClient.Ball(5,   0, 18, 'g'),
             new UdpClient.Ball(6,  12, 18, 'p'),
-            new UdpClient.Ball(7, -12, 6, 'g'),
-            new UdpClient.Ball(8,  0, 6, 'p'),
-            new UdpClient.Ball(9,  12, 6, 'g')
-        );
+
+            new UdpClient.Ball(7, -12, 30, 'g'),
+            new UdpClient.Ball(8,   0, 30, 'p'),
+            new UdpClient.Ball(9,  12, 30, 'g')
+        ));
+
 
         // -------------------------------------------------------------
         // BASKET POSITION
@@ -89,29 +84,35 @@ public class Main {
 //        while (true) {
 
 
-            for (UdpClient.Ball ball : balls) {
-                robot.resetPID();
-                while (true) {
-                    // move robot toward target
-                    robot.goToXY_PID(ball.x, ball.y, 0, 10);
 
-                    // copy internal robot state to UDP visualizer
-                    RobotState internal = robot.getState();
-                    udpRobot.x = internal.x;
-                    udpRobot.y = internal.y;
-                    udpRobot.heading = internal.heading;
+        while (!balls.isEmpty()) {
+            UdpClient.Ball target = balls.get(0);
+            robot.resetPID();
 
-                    // send update to visualizer
-                    client.sendUpdate(udpRobot);
+            while (true) {
+                robot.goToXY_PID(target.x, target.y, 0, 30);
 
-                    // when we get to the ball, break
-                    double dx = ball.x - internal.x;
-                    double dy = ball.y - internal.y;
-                    if (Math.hypot(dx, dy) < 0.5) break;
+                RobotState internal = robot.getState();
+                udpRobot.x = internal.x;
+                udpRobot.y = internal.y;
+                udpRobot.heading = internal.heading;
 
-                    Thread.sleep(20); // ~50Hz update
-                }
+                client.sendUpdate(udpRobot);
+
+                double dx = target.x - internal.x;
+                double dy = target.y - internal.y;
+
+                if (Math.hypot(dx, dy) < 0.5) break;
+
+                Thread.sleep(20);
             }
+
+            balls.remove(0);
+            client.sendBalls(balls);
+        }
+
+
+
 
 //        }
 

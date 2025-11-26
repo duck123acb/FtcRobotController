@@ -23,7 +23,7 @@ public class RobotTest {
         Motor ol = new FakeMotor();
         Motor or = new FakeMotor();
         
-        Robot robot = new Robot(fl, fr, bl, br, il, ir, ol, or);
+        Robot robot = new Robot(fl, fr, bl, br, il, ir, ol, or, 0, 0, 0);
         
         // Set Robot Heading to 90 degrees (PI/2)
         // We need to access the internal state.
