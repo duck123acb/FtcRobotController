@@ -82,3 +82,6 @@ lint/tmp/
 
 # Node
 node_modules
+
+# VSCode
+.vscode
