@@ -200,10 +200,11 @@ public class DriveSystem {
     }
 
     public void driveMecanum(double x, double y, double turn) {
-        double fl = y + x + turn;
-        double fr = y - x - turn;
-        double bl = y - x + turn;
-        double br = y + x - turn;
+        // Inverted turn to match standard CCW+ convention
+        double fl = y + x - turn;
+        double fr = y - x + turn;
+        double bl = y - x - turn;
+        double br = y + x + turn;
 
         frontLeft.setPower(fl);
         frontRight.setPower(fr);

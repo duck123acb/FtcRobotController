@@ -24,6 +24,9 @@ public class PID {
     /** Timestamp (nanoseconds) from the previous update. */
     private long lastTime = System.nanoTime();
 
+    /** Flag to handle the first update after reset/init. */
+    private boolean firstRun = true;
+
     /**
      * Create a new PID controller.
      *
@@ -58,6 +61,13 @@ public class PID {
 
         double error = target - current;
 
+        // If this is the first run, we don't have a valid lastError for derivative.
+        // Assume 0 derivative (lastError = error) to prevent spike.
+        if (firstRun) {
+            lastError = error;
+            firstRun = false;
+        }
+
         // Compute integral (with anti-windup)
         integralSum += error * dt;
         integralSum = clamp(integralSum, -integralLimit, integralLimit);
@@ -83,6 +93,7 @@ public class PID {
         integralSum = 0;
         lastError = 0;
         lastOutput = 0;
+        firstRun = true;
         lastTime = System.nanoTime();
     }
 

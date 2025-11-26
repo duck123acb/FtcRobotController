@@ -29,6 +29,12 @@ public class Robot {
         pidHeading = new PID(2.0, 0, 0.1);
     }
 
+    public void resetPID() {
+        pidX.reset();
+        pidY.reset();
+        pidHeading.reset();
+    }
+
     public RobotState getState() {
         return driveSystem.getRobotState();
     }

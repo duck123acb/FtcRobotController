@@ -15,7 +15,7 @@ public class Main {
         // -------------------------------------------------------------
         // ROBOT INITIAL STATE
         // -------------------------------------------------------------
-        UdpClient.RobotState udpRobot = new UdpClient.RobotState(0, 0, 0);
+        UdpClient.RobotState udpRobot = new UdpClient.RobotState(-60, -60, 0);
 
 
         // drivetrain motors
@@ -85,29 +85,35 @@ public class Main {
         // -------------------------------------------------------------
         client.sendConfig(udpRobot, balls, baskets);
 
-        // target: first ball
-        UdpClient.Ball firstBall = balls.get(0);
-
         // simple sim loop
-        while (true) {
-            // move robot toward target
-            robot.goToXY_PID(firstBall.x, firstBall.y, 0, 10);
+//        while (true) {
 
-            // copy internal robot state to UDP visualizer
-            RobotState internal = robot.getState();
-            udpRobot.x = internal.x;
-            udpRobot.y = internal.y;
-            udpRobot.heading = internal.heading;
 
-            // send update to visualizer
-            client.sendUpdate(udpRobot);
+            for (UdpClient.Ball ball : balls) {
+                robot.resetPID();
+                while (true) {
+                    // move robot toward target
+                    robot.goToXY_PID(ball.x, ball.y, 0, 10);
 
-            double dx = firstBall.x - internal.x;
-            double dy = firstBall.y - internal.y;
-            if (Math.hypot(dx, dy) < 0.5) break;
+                    // copy internal robot state to UDP visualizer
+                    RobotState internal = robot.getState();
+                    udpRobot.x = internal.x;
+                    udpRobot.y = internal.y;
+                    udpRobot.heading = internal.heading;
 
-            Thread.sleep(20); // ~50Hz update
-        }
+                    // send update to visualizer
+                    client.sendUpdate(udpRobot);
+
+                    // when we get to the ball, break
+                    double dx = ball.x - internal.x;
+                    double dy = ball.y - internal.y;
+                    if (Math.hypot(dx, dy) < 0.5) break;
+
+                    Thread.sleep(20); // ~50Hz update
+                }
+            }
+
+//        }
 
         client.close();
     }
