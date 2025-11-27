@@ -60,6 +60,7 @@ public class BallChase extends LinearOpMode {
 //    }
 
     // TODO: reimplement apriltags
+    // TODO: break main up into chunks (classes or functions)
 
     @Override
     public void runOpMode() {
