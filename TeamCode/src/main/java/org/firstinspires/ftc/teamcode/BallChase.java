@@ -133,9 +133,9 @@ public class BallChase extends LinearOpMode {
             int camX = targetBlock.x;
             int camY = targetBlock.y;
 
-            // TODO: real conversion here
-            double targetX = camX;
-            double targetY = camY;
+            double[] tgt = CamMath.cameraToField(targetBlock, robot);
+            double targetX = tgt[0];
+            double targetY = tgt[1];
 
             telemetry.addData("Chasing Ball", "ID=%d cam(%d,%d)", targetColor, camX, camY);
             telemetry.update();
