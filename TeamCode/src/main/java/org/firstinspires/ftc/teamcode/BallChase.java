@@ -59,6 +59,8 @@ public class BallChase extends LinearOpMode {
 //        }
 //    }
 
+    // TODO: reimplement apriltags
+
     @Override
     public void runOpMode() {
         HuskyLens huskylens = hardwareMap.get(HuskyLens.class, "huskylens");
@@ -81,7 +83,9 @@ public class BallChase extends LinearOpMode {
         RealMotor leftOuttake = new RealMotor(lo);
         RealMotor rightOuttake = new RealMotor(ro);
 
-        Robot robot = new Robot(leftFront, rightFront, leftBack, rightBack, leftIntake, rightIntake, leftOuttake, rightOuttake, 0, 0, 0);
+        Robot robot = new Robot(leftFront, rightFront, leftBack, rightBack,
+                leftIntake, rightIntake, leftOuttake, rightOuttake,
+                0, 0, 0);
         robot.resetPID();
 
         telemetry.addLine("Waiting...");
@@ -90,38 +94,54 @@ public class BallChase extends LinearOpMode {
         waitForStart();
         if (!opModeIsActive()) return;
 
-        // ----------------------------
-        // MAIN LOOP: drive to 1st ball
-        // ----------------------------
-        while (opModeIsActive()) {
-            // TODO: implement apriltags again
-            // TODO: follow ball orders
-            HuskyLens.Block[] blocks = huskylens.blocks();
-            if (blocks == null || blocks.length == 0) {
-                telemetry.addLine("no balls found");
+        // choose pattern 0 for now
+        int[] pattern = BALL_ORDERS[0];
+
+        for (int targetColor : pattern) {
+
+            telemetry.addData("Next Target Ball", targetColor == PURPLE ? "PURPLE" : "GREEN");
+            telemetry.update();
+
+            HuskyLens.Block targetBlock = null;
+
+            // ---------------------------------------------------
+            // WAIT until we see the ball matching the next color
+            // ---------------------------------------------------
+            while (opModeIsActive()) {
+                HuskyLens.Block[] blocks = huskylens.blocks();
+
+                if (blocks != null) {
+                    for (HuskyLens.Block b : blocks) {
+                        if (b.id == targetColor) {
+                            targetBlock = b;
+                            break;
+                        }
+                    }
+                }
+
+                if (targetBlock != null) break;
+
+                telemetry.addLine("Looking for correct ball...");
                 telemetry.update();
-                continue;
+                sleep(40);
             }
 
-            // take the FIRST block HuskyLens gives
-            HuskyLens.Block b = blocks[0];
+            if (targetBlock == null) break; // failsafe
 
-            int camX = b.x;
-            int camY = b.y;
+            // extract cam coords
+            int camX = targetBlock.x;
+            int camY = targetBlock.y;
 
-            // ------------------------------------------------------------
-            // TODO: replace this with actual cam→field conversion
-            // right now it's "fake field coords" just like your placeholder
-            // ------------------------------------------------------------
+            // TODO: real conversion here
             double targetX = camX;
             double targetY = camY;
 
-            telemetry.addData("Target", "cam(%d,%d) -> field(%.1f, %.1f)", camX, camY, targetX, targetY);
+            telemetry.addData("Chasing Ball", "ID=%d cam(%d,%d)", targetColor, camX, camY);
             telemetry.update();
 
-            // ------------------------------------------------------------
-            // move like the sim: keep stepping until we reach the point
-            // ------------------------------------------------------------
+            // ---------------------------------------------------
+            // GO TO THE COORDS
+            // ---------------------------------------------------
             while (opModeIsActive()) {
                 robot.goToXY_PID(targetX, targetY, 0, 30);
 
@@ -130,16 +150,16 @@ public class BallChase extends LinearOpMode {
                 double dy = targetY - s.y;
 
                 if (Math.hypot(dx, dy) < 1.0) {
-                    telemetry.addLine("ball reached");
+                    telemetry.addLine("Ball reached");
                     telemetry.update();
                     break;
                 }
 
                 sleep(20);
             }
-
-            // once we reach the first ball, stop looping
-            break;
         }
+
+        telemetry.addLine("Finished full pattern");
+        telemetry.update();
     }
 }
