@@ -106,8 +106,6 @@ public class BallChase extends LinearOpMode {
             telemetry.addData("Next Target Ball", targetColor == PURPLE ? "PURPLE" : "GREEN");
             telemetry.update();
 
-            // FIXME: INTAKE
-
             // ---------------------------------------------------
             // WAIT until we see the ball matching the next color
             // ---------------------------------------------------
@@ -131,6 +129,7 @@ public class BallChase extends LinearOpMode {
             }
 
             // FIXME: turn??
+            // turn left, if nothing there, turn 180. there needs to be a tolerance obv
         }
 
         telemetry.addLine("Finished full pattern");
@@ -146,9 +145,18 @@ public class BallChase extends LinearOpMode {
         double dx = targetX - s.x;
         double dy = targetY - s.y;
 
+        if (Math.hypot(dx, dy) < 30.0) {
+            robot.intakeSystem.spin(1.0);
+        }
+        else {
+            robot.intakeSystem.stop();
+        }
         if (Math.hypot(dx, dy) < 1.0) {
             telemetry.addLine(Ball_reached);
             telemetry.update();
+
+            robot.intakeSystem.stop();
+
             return true;
         }
 
