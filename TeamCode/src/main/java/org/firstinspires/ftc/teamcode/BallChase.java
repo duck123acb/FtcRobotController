@@ -90,7 +90,7 @@ public class BallChase extends LinearOpMode {
         RealMotor leftOuttake = new RealMotor(lo);
         RealMotor rightOuttake = new RealMotor(ro);
 
-        robot = new Robot(leftFront, rightFront, leftBack, rightBack, leftIntake, rightIntake, leftOuttake, rightOuttake, 0, 0, 0);
+        robot = new Robot(leftFront, rightFront, leftBack, rightBack, leftIntake, rightIntake, leftOuttake, rightOuttake, 0, 0, 0); // FIXME: CHANGE ACCORDING TO WHERE WE START
         robot.resetPID();
 
         telemetry.addLine("Waiting...");
@@ -121,15 +121,19 @@ public class BallChase extends LinearOpMode {
             double targetX = tgt[0];
             double targetY = tgt[1];
 
+            RobotState s = robot.getState();
+            double dx = targetX - s.x;
+            double dy = targetY - s.y;
+            double targetHeading = Math.atan2(dy, dx);
+
+            turnTo(targetHeading);
+
             telemetry.addData("Chasing Ball", "ID=%d cam(%d,%d)", targetColor, camX, camY);
             telemetry.update();
 
             while (opModeIsActive()) {
-                if (moveRobotToBall(targetX, targetY, "Ball reached")) break;
+                if (moveRobotToPosition(targetX, targetY, "Ball reached")) break;
             }
-
-            // FIXME: turn??
-            // turn left, if nothing there, turn 180. there needs to be a tolerance obv
         }
 
         telemetry.addLine("Finished full pattern");
@@ -138,7 +142,7 @@ public class BallChase extends LinearOpMode {
         goToBasketAndShoot();
     }
 
-    private boolean moveRobotToBall(double targetX, double targetY, String Ball_reached) {
+    private boolean moveRobotToPosition(double targetX, double targetY, String Ball_reached) {
         robot.goToXY_PID(targetX, targetY, 0, 30);
 
         RobotState s = robot.getState();
@@ -199,10 +203,15 @@ public class BallChase extends LinearOpMode {
 
         // drive until close enough
         while (opModeIsActive()) {
-            if (moveRobotToBall(BASKET_X, BASKET_Y, "At basket")) break;
+            if (moveRobotToPosition(BASKET_X, BASKET_Y, "At basket")) break;
         }
 
-        // FIXME: turn to face the basket
+        RobotState s = robot.getState();
+        double dx = BASKET_X - s.x;
+        double dy = BASKET_Y - s.y;
+        double targetHeading = Math.atan2(dy, dx);
+
+        turnTo(targetHeading);
 
         // ---------------------------------------------------
         // SHOOT
@@ -225,9 +234,25 @@ public class BallChase extends LinearOpMode {
         // stop motors
         robot.outtakeSystem.stop();
 
-        // FIXME: turn to face the balls again
+        turnTo(Math.PI/2);
 
         telemetry.addLine("Scored");
         telemetry.update();
+    }
+
+    private void turnTo(double targetHeadingRadians) {
+        while (opModeIsActive()) {
+            robot.turnPID(targetHeadingRadians);
+
+            RobotState s = robot.getState();
+
+            double diff = targetHeadingRadians - s.heading;
+            while (diff > Math.PI) diff -= 2 * Math.PI;
+            while (diff < -Math.PI) diff += 2 * Math.PI;
+
+            if (Math.abs(diff) < 0.05) break; // ~3 degrees
+
+            sleep(20);
+        }
     }
 }
