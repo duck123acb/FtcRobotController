@@ -27,7 +27,7 @@ public class TeleOpMecanum extends LinearOpMode {
         backLeft = hardwareMap.get(DcMotor.class, "backLeftMotor");
         backRight = hardwareMap.get(DcMotor.class, "backRightMotor");
         intake = hardwareMap.get(DcMotor.class, "leftIntakeMotor");
-        outtake = hardwareMap.get(DcMotor.class, "rightOuttakeMotor");
+        outtake = hardwareMap.get(DcMotor.class, "leftOuttakeMotor");
         launch = hardwareMap.get(Servo.class, "launchServo");
 
         // set motor directions
