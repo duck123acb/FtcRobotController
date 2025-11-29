@@ -22,6 +22,7 @@ public class BallChase extends LinearOpMode {
     static final double BASKET_Y = 24;
 
     Robot robot;
+    HuskyLens huskylens;
 
 //    @Override
 //    public void runOpMode() {
@@ -66,11 +67,10 @@ public class BallChase extends LinearOpMode {
 //    }
 
     // TODO: reimplement apriltags
-    // TODO: break main up into chunks (classes or functions)
 
     @Override
     public void runOpMode() {
-        HuskyLens huskylens = hardwareMap.get(HuskyLens.class, "huskylens");
+        huskylens = hardwareMap.get(HuskyLens.class, "huskylens");
         DcMotor lf = hardwareMap.get(DcMotor.class, "leftFront");
         DcMotor rf = hardwareMap.get(DcMotor.class, "rightFront");
         DcMotor lb = hardwareMap.get(DcMotor.class, "leftBack");
@@ -262,6 +262,25 @@ public class BallChase extends LinearOpMode {
             if (Math.abs(diff) < 0.05) break; // ~3 degrees
 
             sleep(20);
+        }
+    }
+
+    int SetAprilTag() {
+        huskylens.selectAlgorithm(HuskyLens.Algorithm.TAG_RECOGNITION);
+        HuskyLens.Block[] blocks = huskylens.blocks();
+
+        if (blocks.length > 0) {
+            HuskyLens.Block firstBlock = blocks[0];
+            telemetry.addData("First Tag", "ID=%d at (%d,%d) size %dx%d",
+                    firstBlock.id, firstBlock.x, firstBlock.y,
+                    firstBlock.width, firstBlock.height
+            );
+            telemetry.update();
+            return firstBlock.id;
+        } else {
+            telemetry.addData("No Tags Found", "");
+            telemetry.update();
+            return -1;
         }
     }
 }
