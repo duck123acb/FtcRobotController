@@ -4,7 +4,7 @@ plugins {
 }
 
 application {
-    mainClass = 'com.duck123acb.sim.Main'
+    mainClass = 'com.duck123acb.sim.RobotTest'
 }
 java {
     sourceCompatibility JavaVersion.VERSION_11

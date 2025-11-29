@@ -34,7 +34,7 @@ public class Main {
         // STARTING POSITION
         double startX = 0;
         double startY = -60;
-        double startHeading = 0;
+        double startHeading = Math.toRadians(45);
         
         Robot robot = new Robot(fl, fr, bl, br, il, ir, ol, or, startX, startY, startHeading);
 
@@ -85,12 +85,39 @@ public class Main {
 
 
 
+
         while (!balls.isEmpty()) {
             UdpClient.Ball target = balls.get(0);
             robot.resetPID();
 
+            // Calculate heading to face the target ball
+            RobotState current = robot.getState();
+            double dx = target.x - current.x;
+            double dy = target.y - current.y;
+            double targetHeading = Math.atan2(dy, dx);
+            
+            // Turn to face target
             while (true) {
-                robot.goToXY_PID(target.x, target.y, 0, 30);
+                robot.turnPID(targetHeading);
+
+                RobotState internal = robot.getState();
+                udpRobot.x = internal.x;
+                udpRobot.y = internal.y;
+                udpRobot.heading = internal.heading;
+                client.sendUpdate(udpRobot);
+
+                double diff = targetHeading - internal.heading;
+                while (diff > Math.PI) diff -= 2 * Math.PI;
+                while (diff < -Math.PI) diff += 2 * Math.PI;
+
+                if (Math.abs(diff) < 0.05) break; // ~3 degrees tolerance
+
+                Thread.sleep(20);
+            }
+
+            // Move to target
+            while (true) {
+                robot.goToXY_PID(target.x, target.y, targetHeading, 30);
 
                 RobotState internal = robot.getState();
                 udpRobot.x = internal.x;
@@ -99,10 +126,10 @@ public class Main {
 
                 client.sendUpdate(udpRobot);
 
-                double dx = target.x - internal.x;
-                double dy = target.y - internal.y;
+                double distDx = target.x - internal.x;
+                double distDy = target.y - internal.y;
 
-                if (Math.hypot(dx, dy) < 0.5) break;
+                if (Math.hypot(distDx, distDy) < 0.5) break;
 
                 Thread.sleep(20);
             }
@@ -110,12 +137,6 @@ public class Main {
             balls.remove(0);
             client.sendBalls(balls);
         }
-
-
-
-
-//        }
-
         client.close();
     }
 }

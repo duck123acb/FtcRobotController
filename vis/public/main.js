@@ -121,7 +121,9 @@ function drawRobot() {
     ctx.fill();
 
     // heading arrow
-    const mathAngle = (-heading + 90) * (Math.PI / 180);
+    // heading arrow
+    // heading is already in radians (0 = East, + = CCW)
+    const mathAngle = heading;
     const endX = pos.x + robotRadius * Math.cos(mathAngle);
     const endY = pos.y - robotRadius * Math.sin(mathAngle);
 

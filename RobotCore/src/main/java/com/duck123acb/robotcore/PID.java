@@ -61,6 +61,33 @@ public class PID {
 
         double error = target - current;
 
+        return calculate(error, dt);
+    }
+
+    /**
+     * Computes a PID update for an angle (handles wrapping -PI to PI).
+     * Assumes input angles are in radians.
+     *
+     * @param targetAngle target angle in radians
+     * @param currentAngle current angle in radians
+     * @return PID output
+     */
+    public double updateAngle(double targetAngle, double currentAngle) {
+        long now = System.nanoTime();
+        double dt = (now - lastTime) / 1e9; // convert ns → seconds
+
+        if (dt <= 0) dt = 1e-3;
+
+        double error = targetAngle - currentAngle;
+
+        // Normalize error to -PI to +PI
+        while (error > Math.PI) error -= 2 * Math.PI;
+        while (error < -Math.PI) error += 2 * Math.PI;
+
+        return calculate(error, dt);
+    }
+
+    private double calculate(double error, double dt) {
         // If this is the first run, we don't have a valid lastError for derivative.
         // Assume 0 derivative (lastError = error) to prevent spike.
         if (firstRun) {
@@ -81,7 +108,7 @@ public class PID {
         // Update stored values for next cycle
         lastError = error;
         lastOutput = output;
-        lastTime = now;
+        lastTime = System.nanoTime(); // Update time here
 
         return output;
     }

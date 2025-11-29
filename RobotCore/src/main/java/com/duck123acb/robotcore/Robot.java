@@ -54,11 +54,10 @@ public class Robot {
         // PID outputs in FIELD space
         double vx = pidX.update(targetX, x) * speed;
         double vy = pidY.update(targetY, y) * speed;
-        double omega = pidHeading.update(targetHeading, heading);
+        double omega = pidHeading.updateAngle(targetHeading, heading);
 
         // convert to ROBOT space (field-relative drive)
-        double radH = heading; // heading is already in radians
-
+        double radH = heading; // heading is in radians
 
         double robotX = vx * Math.sin(radH) - vy * Math.cos(radH);
         double robotY = vx * Math.cos(radH) + vy * Math.sin(radH);
@@ -66,6 +65,41 @@ public class Robot {
         // send to mecanum mixer
         driveSystem.driveMecanum(robotX, robotY, omega);
         driveSystem.updateSim(0.02);
+    }
 
+    /**
+     * Turn the robot to a specific heading using PID.
+     * @param targetHeading Target heading in radians.
+     */
+    public void turnPID(double targetHeading) {
+        RobotState state = driveSystem.getRobotState();
+        double omega = pidHeading.updateAngle(targetHeading, state.heading);
+        driveSystem.driveMecanum(0, 0, omega);
+        driveSystem.updateSim(0.02);
+    }
+
+    /**
+     * Drive the robot in a specific direction (field-centric) with a given speed.
+     * @param directionRadians Direction to move in radians (0 is East, PI/2 is North).
+     * @param speed Speed magnitude (0-1).
+     * @param targetHeading Target heading to maintain (radians).
+     */
+    public void driveDirection(double directionRadians, double speed, double targetHeading) {
+        RobotState state = driveSystem.getRobotState();
+        
+        // Calculate field-centric velocities
+        double vx = speed * Math.cos(directionRadians);
+        double vy = speed * Math.sin(directionRadians);
+        
+        // Calculate rotation to maintain heading
+        double omega = pidHeading.updateAngle(targetHeading, state.heading);
+        
+        // Convert to robot-centric
+        double radH = state.heading;
+        double robotX = vx * Math.sin(radH) - vy * Math.cos(radH);
+        double robotY = vx * Math.cos(radH) + vy * Math.sin(radH);
+        
+        driveSystem.driveMecanum(robotX, robotY, omega);
+        driveSystem.updateSim(0.02);
     }
 }
