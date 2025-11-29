@@ -9,13 +9,12 @@ import com.qualcomm.robotcore.hardware.Servo;
 @TeleOp(name="TeleOp - Mecanum (Linear)")
 public class TeleOpMecanum extends LinearOpMode {
     DcMotor frontLeft, frontRight, backLeft, backRight;
-    DcMotor leftIntake, rightIntake;
-    DcMotor leftOuttake, rightOuttake;
+    DcMotor intake, outtake;
 
     Servo launch;
 
     DriveSystem driveSystem;
-    TakeSystem intakeSystem, outtakeSystem;
+//    TakeSystem intakeSystem, outtakeSystem;
 
     double outtakePower = 1;
     int intakePower = 1;
@@ -27,21 +26,18 @@ public class TeleOpMecanum extends LinearOpMode {
         frontRight = hardwareMap.get(DcMotor.class, "frontRightMotor");
         backLeft = hardwareMap.get(DcMotor.class, "backLeftMotor");
         backRight = hardwareMap.get(DcMotor.class, "backRightMotor");
-        leftIntake = hardwareMap.get(DcMotor.class, "leftIntakeMotor");
-        rightIntake = hardwareMap.get(DcMotor.class, "rightIntakeMotor");
-        leftOuttake = hardwareMap.get(DcMotor.class, "leftOuttakeMotor");
-        rightOuttake = hardwareMap.get(DcMotor.class, "rightOuttakeMotor");
+        intake = hardwareMap.get(DcMotor.class, "leftIntakeMotor");
+        outtake = hardwareMap.get(DcMotor.class, "rightOuttakeMotor");
         launch = hardwareMap.get(Servo.class, "launchServo");
 
         // set motor directions
         frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
         backRight.setDirection(DcMotorSimple.Direction.REVERSE);
-        rightOuttake.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // initialize systems
         driveSystem = new DriveSystem(frontLeft, frontRight, backLeft, backRight);
-        intakeSystem = new TakeSystem(leftIntake, rightIntake);
-        outtakeSystem = new TakeSystem(leftOuttake, rightOuttake);
+//        intakeSystem = new TakeSystem(leftIntake, rightIntake);
+//        outtakeSystem = new TakeSystem(leftOuttake, rightOuttake);
 
         telemetry.addLine("Initialized — ready to start!");
         telemetry.update();
@@ -58,12 +54,12 @@ public class TeleOpMecanum extends LinearOpMode {
 
             driveSystem.drive(gamepad2);
 
-            intakeSystem.spin(intakePower);
+            intake.setPower(intakePower);
 
             if (gamepad2.y)
-                outtakeSystem.spin(outtakePower);
+                outtake.setPower(outtakePower);
             else
-                outtakeSystem.stop();
+                outtake.setPower(0);
 
             if (gamepad2.dpadUpWasPressed())
                 outtakePower = Math.min(outtakePower + 0.2, 1);
@@ -85,10 +81,6 @@ public class TeleOpMecanum extends LinearOpMode {
             telemetry.update();
 
         }
-
-        // although generally not java standard im not a java programmer so screw you
-        intakeSystem.stop();
-        outtakeSystem.stop();
     }
 }
 
