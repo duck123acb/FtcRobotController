@@ -1,4 +1,29 @@
+import org.gradle.api.initialization.resolve.RepositoriesMode
+
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+        google()
+    }
+}
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    repositories {
+        google()
+        mavenCentral()
+
+        // FTC-specific Maven repos
+        maven { url 'https://maven.brott.dev/' }
+        maven { url 'https://repo1.maven.org/maven2/' }
+    }
+}
+
+
 include ':FtcRobotController'
 include ':TeamCode'
-include ':Sim'
 include ':RobotCore'
