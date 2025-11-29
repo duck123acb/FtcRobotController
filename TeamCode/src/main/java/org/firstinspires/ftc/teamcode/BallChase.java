@@ -169,7 +169,8 @@ public class BallChase extends LinearOpMode {
     }
 
     private HuskyLens.Block getBlock(int targetColor, HuskyLens huskylens) {
-        HuskyLens.Block targetBlock = null;
+        HuskyLens.Block best = null;
+        double bestDist = Double.MAX_VALUE;
 
         while (opModeIsActive()) {
             HuskyLens.Block[] blocks = huskylens.blocks();
@@ -177,20 +178,28 @@ public class BallChase extends LinearOpMode {
             if (blocks != null) {
                 for (HuskyLens.Block b : blocks) {
                     if (b.id == targetColor) {
-                        targetBlock = b;
-                        break;
+                        // compute distance from cam center
+                        double dx = b.x - 160;   // assuming 320px width
+                        double dy = b.y - 120;   // assuming 240px height
+                        double dist = Math.hypot(dx, dy);
+
+                        if (dist < bestDist) {
+                            bestDist = dist;
+                            best = b;
+                        }
                     }
                 }
             }
 
-            if (targetBlock != null) break;
+            if (best != null) {
+                return best;
+            }
 
             telemetry.addLine("Looking for correct ball...");
             telemetry.update();
             sleep(40);
         }
-
-        return targetBlock;
+        return null;
     }
 
     void goToBasketAndShoot() { // FIXME: change according to new intake/outtake system
