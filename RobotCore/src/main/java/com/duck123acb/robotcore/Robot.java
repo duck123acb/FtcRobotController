@@ -8,13 +8,13 @@ MECANUM WHEEL ROBOT
 INTAKE/OUTTAKE
 */
 public class Robot {
-    DriveSystem driveSystem;
-    TakeSystem intakeSystem, outtakeSystem;
+    public DriveSystem driveSystem;
+    public TakeSystem intakeSystem, outtakeSystem;
 
     // --- PID controllers for XY + heading ---
-    private PID pidX;
-    private PID pidY;
-    private PID pidHeading;
+    private final PID pidX;
+    private final PID pidY;
+    private final PID pidHeading;
 
     public Robot(Motor fl, Motor fr, Motor bl, Motor br,
                  Motor il, Motor ir, Motor ol, Motor or,

@@ -17,6 +17,12 @@ public class BallChase extends LinearOpMode {
     static final int GREEN = 2;
     static final int[][] BALL_ORDERS = {{GREEN, PURPLE, GREEN}, {PURPLE, GREEN, PURPLE}, {PURPLE, PURPLE, GREEN}};
 
+    // FIXME: tweak values
+    static final double BASKET_X = 60;
+    static final double BASKET_Y = 24;
+
+    Robot robot;
+
 //    @Override
 //    public void runOpMode() {
 //        // Initialize real hardware
@@ -84,9 +90,7 @@ public class BallChase extends LinearOpMode {
         RealMotor leftOuttake = new RealMotor(lo);
         RealMotor rightOuttake = new RealMotor(ro);
 
-        Robot robot = new Robot(leftFront, rightFront, leftBack, rightBack,
-                leftIntake, rightIntake, leftOuttake, rightOuttake,
-                0, 0, 0);
+        robot = new Robot(leftFront, rightFront, leftBack, rightBack, leftIntake, rightIntake, leftOuttake, rightOuttake, 0, 0, 0);
         robot.resetPID();
 
         telemetry.addLine("Waiting...");
@@ -99,33 +103,15 @@ public class BallChase extends LinearOpMode {
         int[] pattern = BALL_ORDERS[0];
 
         for (int targetColor : pattern) {
-
             telemetry.addData("Next Target Ball", targetColor == PURPLE ? "PURPLE" : "GREEN");
             telemetry.update();
 
-            HuskyLens.Block targetBlock = null;
+            // FIXME: INTAKE
 
             // ---------------------------------------------------
             // WAIT until we see the ball matching the next color
             // ---------------------------------------------------
-            while (opModeIsActive()) {
-                HuskyLens.Block[] blocks = huskylens.blocks();
-
-                if (blocks != null) {
-                    for (HuskyLens.Block b : blocks) {
-                        if (b.id == targetColor) {
-                            targetBlock = b;
-                            break;
-                        }
-                    }
-                }
-
-                if (targetBlock != null) break;
-
-                telemetry.addLine("Looking for correct ball...");
-                telemetry.update();
-                sleep(40);
-            }
+            HuskyLens.Block targetBlock = getBlock(targetColor, huskylens);
 
             if (targetBlock == null) break; // failsafe
 
@@ -140,27 +126,100 @@ public class BallChase extends LinearOpMode {
             telemetry.addData("Chasing Ball", "ID=%d cam(%d,%d)", targetColor, camX, camY);
             telemetry.update();
 
-            // ---------------------------------------------------
-            // GO TO THE COORDS
-            // ---------------------------------------------------
             while (opModeIsActive()) {
-                robot.goToXY_PID(targetX, targetY, 0, 30);
-
-                RobotState s = robot.getState();
-                double dx = targetX - s.x;
-                double dy = targetY - s.y;
-
-                if (Math.hypot(dx, dy) < 1.0) {
-                    telemetry.addLine("Ball reached");
-                    telemetry.update();
-                    break;
-                }
-
-                sleep(20);
+                if (moveRobotToBall(targetX, targetY, "Ball reached")) break;
             }
+
+            // FIXME: turn??
         }
 
         telemetry.addLine("Finished full pattern");
+        telemetry.update();
+
+        goToBasketAndShoot();
+    }
+
+    private boolean moveRobotToBall(double targetX, double targetY, String Ball_reached) {
+        robot.goToXY_PID(targetX, targetY, 0, 30);
+
+        RobotState s = robot.getState();
+        double dx = targetX - s.x;
+        double dy = targetY - s.y;
+
+        if (Math.hypot(dx, dy) < 1.0) {
+            telemetry.addLine(Ball_reached);
+            telemetry.update();
+            return true;
+        }
+
+        sleep(20);
+        return false;
+    }
+
+    private HuskyLens.Block getBlock(int targetColor, HuskyLens huskylens) {
+        HuskyLens.Block targetBlock = null;
+
+        while (opModeIsActive()) {
+            HuskyLens.Block[] blocks = huskylens.blocks();
+
+            if (blocks != null) {
+                for (HuskyLens.Block b : blocks) {
+                    if (b.id == targetColor) {
+                        targetBlock = b;
+                        break;
+                    }
+                }
+            }
+
+            if (targetBlock != null) break;
+
+            telemetry.addLine("Looking for correct ball...");
+            telemetry.update();
+            sleep(40);
+        }
+
+        return targetBlock;
+    }
+
+    void goToBasketAndShoot() { // FIXME: change according to new intake/outtake system
+        // ---------------------------------------------------
+        // DRIVE TO THE BASKET
+        // ---------------------------------------------------
+
+        telemetry.addData("Basket", "Going to (%.1f, %.1f)", BASKET_X, BASKET_Y);
+        telemetry.update();
+
+        // drive until close enough
+        while (opModeIsActive()) {
+            if (moveRobotToBall(BASKET_X, BASKET_Y, "At basket")) break;
+        }
+
+        // FIXME: turn to face the basket
+
+        // ---------------------------------------------------
+        // SHOOT
+        // ---------------------------------------------------
+
+        // spin up your outtake motors
+        robot.outtakeSystem.spin(1.0);
+
+        // wait for flywheel to settle
+        sleep(500);
+
+        // fire servo
+        // launch.setPosition(1.0);   // FIXME: uncomment if you have the servo here
+
+        sleep(350);
+
+        // return servo
+        // launch.setPosition(0.0);   // FIXME: uncomment if you have the servo here
+
+        // stop motors
+        robot.outtakeSystem.stop();
+
+        // FIXME: turn to face the balls again
+
+        telemetry.addLine("Scored");
         telemetry.update();
     }
 }
