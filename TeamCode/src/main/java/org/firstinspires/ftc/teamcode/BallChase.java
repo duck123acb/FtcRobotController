@@ -18,11 +18,13 @@ public class BallChase extends LinearOpMode {
     static final int GREEN = 2;
     static final int[][] BALL_ORDERS = {{GREEN, PURPLE, GREEN}, {PURPLE, GREEN, PURPLE}, {PURPLE, PURPLE, GREEN}};
 
-    // FIXME: tweak values
+    // FIXME: tweak values based on which side, AND where we start, AND what the fuck man, AND real field coordinates
     static final Position BASKET = new Position(60, 24, 0);
-    static final Position BALL_LINE_1 = new Position(60, 24, 90);
-    static final Position BALL_LINE_2 = new Position(60, 24, 90);
-    static final Position BALL_LINE_3 = new Position(60, 24, 90);
+    static final Position[] BALL_LINES = {
+        new Position(60, 24, 90),
+        new Position(60, 24, 90),
+        new Position(60, 24, 90)
+    };
 
     Robot robot;
     HuskyLens huskylens;
@@ -73,136 +75,37 @@ public class BallChase extends LinearOpMode {
 
             go to ball line N
 
-            collect balls / track colours in what space
+            collect balls / track colours in what space of the spindex
 
             go the shooter
             shoot in the right order
 
         }
         */
+
+        for (Position linePos : BALL_LINES) {
+            while (opModeIsActive()) if (moveRobot(linePos)) break; // move to posiiton
+
+
+
+        }
     }
 
-    private boolean moveRobotToPosition(double targetX, double targetY, String Ball_reached) {
-        robot.goToXY_PID(targetX, targetY, 0, 30);
+    private boolean moveRobot(Position target) {
+        robot.goToXY_PID(target.x, target.y, target.heading, 30);
 
-        RobotState s = robot.getState();
-        double dx = targetX - s.x;
-        double dy = targetY - s.y;
+        RobotState state = robot.getState();
+        double dx = target.x - state.x;
+        double dy = target.y - state.y;
 
-        if (Math.hypot(dx, dy) < 30.0) {
-            robot.intakeSystem.spin(1.0);
-        }
-        else {
-            robot.intakeSystem.stop();
-        }
         if (Math.hypot(dx, dy) < 1.0) {
-            telemetry.addLine(Ball_reached);
+            telemetry.addData("Position Reached", "x: %.2f, y: %.2f, heading: %.2f", state.x, state.y, state.heading);
             telemetry.update();
-
-            robot.intakeSystem.stop();
 
             return true;
         }
 
-        sleep(20);
         return false;
-    }
-
-    private HuskyLens.Block getBlock(int targetColor, HuskyLens huskylens) {
-        HuskyLens.Block best = null;
-        double bestDist = Double.MAX_VALUE;
-
-        while (opModeIsActive()) {
-            HuskyLens.Block[] blocks = huskylens.blocks();
-
-            if (blocks != null) {
-                for (HuskyLens.Block b : blocks) {
-                    if (b.id == targetColor) {
-                        // compute distance from cam center
-                        double dx = b.x - 160;   // assuming 320px width
-                        double dy = b.y - 120;   // assuming 240px height
-                        double dist = Math.hypot(dx, dy);
-
-                        if (dist < bestDist) {
-                            bestDist = dist;
-                            best = b;
-                        }
-                    }
-                }
-            }
-
-            if (best != null) {
-                return best;
-            }
-
-            telemetry.addLine("Looking for correct ball...");
-            telemetry.update();
-            sleep(40);
-        }
-        return null;
-    }
-
-    void goToBasketAndShoot() { // FIXME: change according to new intake/outtake system
-        // ---------------------------------------------------
-        // DRIVE TO THE BASKET
-        // ---------------------------------------------------
-
-        telemetry.addData("Basket", "Going to (%.1f, %.1f)", BASKET.x, BASKET.y);
-        telemetry.update();
-
-        // drive until close enough
-        while (opModeIsActive()) {
-            if (moveRobotToPosition(BASKET.x, BASKET.y, "At basket")) break;
-        }
-
-        RobotState s = robot.getState();
-        double dx = BASKET.x - s.x;
-        double dy = BASKET.y - s.y;
-        double targetHeading = BASKET.heading;
-
-        turnTo(targetHeading);
-
-        // ---------------------------------------------------
-        // SHOOT
-        // ---------------------------------------------------
-
-        // spin up your outtake motors
-        robot.outtakeSystem.spin(1.0);
-
-        // wait for flywheel to settle
-        sleep(500);
-
-        // fire servo
-        // launch.setPosition(1.0);   // FIXME: uncomment if you have the servo here
-
-        sleep(350);
-
-        // return servo
-        // launch.setPosition(0.0);   // FIXME: uncomment if you have the servo here
-
-        // stop motors
-        robot.outtakeSystem.stop();
-
-        turnTo(Math.PI/2);
-
-        telemetry.addLine("Scored");
-        telemetry.update();
-    }
-
-    private void turnTo(double targetHeadingRadians) {
-        while (opModeIsActive()) {
-            robot.turnPID(targetHeadingRadians);
-
-            RobotState s = robot.getState();
-
-            double diff = targetHeadingRadians - s.heading;
-            while (diff > Math.PI) diff -= 2 * Math.PI;
-            while (diff < -Math.PI) diff += 2 * Math.PI;
-
-            if (Math.abs(diff) < 0.05) break; // ~3 degrees
-
-            sleep(20);
-        }
     }
 
     int SetAprilTag() {
