@@ -68,7 +68,18 @@ public class BallChase extends LinearOpMode {
             }
         }
 
+        /*
+        for ball lines {
 
+            go to ball line N
+
+            collect balls / track colours in what space
+
+            go the shooter
+            shoot in the right order
+
+        }
+        */
     }
 
     private boolean moveRobotToPosition(double targetX, double targetY, String Ball_reached) {
