@@ -86,7 +86,7 @@ public class BallChase extends LinearOpMode {
         for (Position linePos : BALL_LINES) {
             goTo(linePos); // move to position
 
-            // collect balls / track colours in what space of the spindex
+            // collect balls / track colours in what space of the spin-dex
 
             goTo(BASKET);
             // shoot in the right order
