@@ -14,9 +14,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
  */
 @Autonomous(name = "BallChase_Decode")
 public class BallChase extends LinearOpMode {
-    static final int PURPLE = 1;
-    static final int GREEN = 2;
-    static final int[][] BALL_ORDERS = {{GREEN, PURPLE, GREEN}, {PURPLE, GREEN, PURPLE}, {PURPLE, PURPLE, GREEN}};
+    static final Artifact[][] ARTIFACT_ORDERS = {{Artifact.GREEN, Artifact.PURPLE, Artifact.GREEN}, {Artifact.PURPLE, Artifact.GREEN, Artifact.PURPLE}, {Artifact.PURPLE, Artifact.PURPLE, Artifact.GREEN}};
 
     // FIXME: tweak values based on which side, AND ADD real field coordinates
     static final Position BASKET = new Position(60, 24, 0);
@@ -28,6 +26,16 @@ public class BallChase extends LinearOpMode {
 
     Robot robot;
     HuskyLens huskylens;
+
+    public static class Ball {
+        public final Artifact artifact;
+        public final HuskyLens.Block block;
+
+        public Ball(Artifact artifact, HuskyLens.Block block) {
+            this.artifact = artifact;
+            this.block = block;
+        }
+    }
 
     @Override
     public void runOpMode() {
@@ -60,15 +68,19 @@ public class BallChase extends LinearOpMode {
         waitForStart();
         if (!opModeIsActive()) return;
 
+        huskylens.selectAlgorithm(HuskyLens.Algorithm.TAG_RECOGNITION);
+
         // SET BALL ORDER
-        int[] ballOrder = BALL_ORDERS[0]; // set 0 as default
+        Artifact[] artifactOrder = ARTIFACT_ORDERS[0]; // set 0 as default
         while (opModeIsActive()) {
             int tag = SetAprilTag();
             if (tag != -1) { // actually set it once found
-                ballOrder = BALL_ORDERS[tag];
+                artifactOrder = ARTIFACT_ORDERS[tag];
                 break;
             }
         }
+
+        huskylens.selectAlgorithm(HuskyLens.Algorithm.OBJECT_RECOGNITION);
 
         /*
         for ball lines {
@@ -86,15 +98,20 @@ public class BallChase extends LinearOpMode {
         for (Position linePos : BALL_LINES) {
             goTo(linePos); // move to position
 
+            robot.intakeSystem.spin(1.0);
+
             // collect balls / track colours in what space of the spin-dex
 
             goTo(BASKET);
-            // shoot in the right order
+
+            for (Artifact targetColor : artifactOrder) {
+                // spin spin-dex to position
+                robot.outtakeSystem.spin(1.0);
+            }
         }
     }
 
     int SetAprilTag() {
-        huskylens.selectAlgorithm(HuskyLens.Algorithm.TAG_RECOGNITION);
         HuskyLens.Block[] blocks = huskylens.blocks();
 
         if (blocks.length > 0) {
@@ -130,5 +147,4 @@ public class BallChase extends LinearOpMode {
     private void goTo(Position target) {
         while (opModeIsActive()) if (moveRobot(target)) break;
     }
-
 }
