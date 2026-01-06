@@ -9,14 +9,15 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
 /**
- * This is the main OpMode for the "BallChase" autonomous routine.
- * It initializes the real hardware and then passes control to the BallChaseLogic class.
- */
+ * OpMode for the "BallChase" autonomous routine.
+ **/
 @Autonomous(name = "BallChase_Decode")
 public class BallChase extends LinearOpMode {
     static final Artifact[][] ARTIFACT_ORDERS = {{Artifact.GREEN, Artifact.PURPLE, Artifact.GREEN}, {Artifact.PURPLE, Artifact.GREEN, Artifact.PURPLE}, {Artifact.PURPLE, Artifact.PURPLE, Artifact.GREEN}};
 
     // FIXME: tweak values based on which side, AND ADD real field coordinates
+
+    // field coordinates
     static final Position BASKET = new Position(60, 24, 0);
     static final Position[] BALL_LINES = {
         new Position(60, 24, 90),
@@ -24,21 +25,16 @@ public class BallChase extends LinearOpMode {
         new Position(60, 24, 90)
     };
 
+    // hardware
     Robot robot;
     HuskyLens huskylens;
 
-    public static class Ball {
-        public final Artifact artifact;
-        public final HuskyLens.Block block;
-
-        public Ball(Artifact artifact, HuskyLens.Block block) {
-            this.artifact = artifact;
-            this.block = block;
-        }
-    }
+    // flags
+    Artifact[] artifactOrder;
 
     @Override
     public void runOpMode() {
+        // hardware init
         huskylens = hardwareMap.get(HuskyLens.class, "huskylens");
         DcMotor lf = hardwareMap.get(DcMotor.class, "leftFront");
         DcMotor rf = hardwareMap.get(DcMotor.class, "rightFront");
@@ -48,17 +44,14 @@ public class BallChase extends LinearOpMode {
         DcMotor ri = hardwareMap.get(DcMotor.class, "rightIntakeMotor");
         DcMotor lo = hardwareMap.get(DcMotor.class, "leftOuttakeMotor");
         DcMotor ro = hardwareMap.get(DcMotor.class, "rightOuttakeMotor");
-
         RealMotor leftFront = new RealMotor(lf);
         RealMotor rightFront = new RealMotor(rf);
         RealMotor leftBack = new RealMotor(lb);
         RealMotor rightBack = new RealMotor(rb);
-
         RealMotor leftIntake = new RealMotor(li);
         RealMotor rightIntake = new RealMotor(ri);
         RealMotor leftOuttake = new RealMotor(lo);
         RealMotor rightOuttake = new RealMotor(ro);
-
         robot = new Robot(leftFront, rightFront, leftBack, rightBack, leftIntake, rightIntake, leftOuttake, rightOuttake, 0, 0, 0); // FIXME: CHANGE ACCORDING TO WHERE WE START
         robot.resetPID();
 
@@ -70,15 +63,17 @@ public class BallChase extends LinearOpMode {
 
         huskylens.selectAlgorithm(HuskyLens.Algorithm.TAG_RECOGNITION);
 
-        // SET BALL ORDER
-        Artifact[] artifactOrder = ARTIFACT_ORDERS[0]; // set 0 as default
+        // set ball order based on apriltag
+        artifactOrder = ARTIFACT_ORDERS[0]; // set 0 as default
         while (opModeIsActive()) {
             int tag = SetAprilTag();
-            if (tag != -1) { // actually set it once found
+            if (tag != -1) { // set it once found
                 artifactOrder = ARTIFACT_ORDERS[tag];
                 break;
             }
         }
+
+        lebron();
 
         huskylens.selectAlgorithm(HuskyLens.Algorithm.OBJECT_RECOGNITION);
 
@@ -95,6 +90,7 @@ public class BallChase extends LinearOpMode {
         }
         */
 
+        // go to ball position
         for (Position linePos : BALL_LINES) {
             goTo(linePos); // move to position
 
@@ -109,12 +105,7 @@ public class BallChase extends LinearOpMode {
                 // intake off
             }
 
-            goTo(BASKET);
-
-            for (Artifact targetColor : artifactOrder) {
-                // spin spin-dex to position
-                robot.outtakeSystem.spin(1.0);
-            }
+            lebron();
         }
     }
 
@@ -198,5 +189,14 @@ public class BallChase extends LinearOpMode {
 
     private void goTo(Position target) {
         while (opModeIsActive()) if (moveRobot(target)) break;
+    }
+
+    private void lebron() { // go to basket and shoot
+        goTo(BASKET);
+
+        for (Artifact targetColor : artifactOrder) {
+            // TODO: spin spin-dex to position
+            robot.outtakeSystem.spin(1.0);
+        }
     }
 }
