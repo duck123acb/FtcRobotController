@@ -100,7 +100,14 @@ public class BallChase extends LinearOpMode {
 
             robot.intakeSystem.spin(1.0);
 
-            // collect balls / track colours in what space of the spin-dex
+            for (int x = 0; x < 3; x++) {
+                Ball currBall = getBall();
+                // turn intake on
+                // move to ball
+                // turn spin-dex to correct position
+                // store ball in that spot
+                // intake off
+            }
 
             goTo(BASKET);
 
