@@ -128,3 +128,16 @@ For **each ball line position** in `BALL_LINES`:
   - Each ball line
 - Accurate starting pose (critical for PID reliability).
 
+
+# Verification Steps
+## IMPORTANT
+
+Please perform the following checks on the real robot. <br>
+
+Encoder Directions: Verify that positive encoder values move the spin-dex in the correct direction.
+Spin-Dex Positions: Tune SPIN_DEX_GREEN_POS and SPIN_DEX_PURPLE_POS to align the slots correctly.
+Camera Orientation: Ensure the HuskyLens is mounted such that x coordinates align with the robot's turning (left/right).
+Capture Threshold: Tune BALL_CAPTURE_AREA so the robot stops at the right distance.
+Field Coordinates: Measure the actual field coordinates for the ball lines and basket and update the
+Position
+constants.
