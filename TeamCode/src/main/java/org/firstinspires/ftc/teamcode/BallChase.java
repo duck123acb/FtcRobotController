@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.duck123acb.robotcore.Motor;
 import com.duck123acb.robotcore.Position;
 import com.duck123acb.robotcore.Robot;
 import com.duck123acb.robotcore.RobotState;
@@ -9,36 +10,43 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
 /**
- * This is the main OpMode for the "BallChase" autonomous routine.
- * It initializes the real hardware and then passes control to the BallChaseLogic class.
- */
+ * OpMode for the "BallChase" autonomous routine.
+ **/
 @Autonomous(name = "BallChase_Decode")
 public class BallChase extends LinearOpMode {
     static final Artifact[][] ARTIFACT_ORDERS = {{Artifact.GREEN, Artifact.PURPLE, Artifact.GREEN}, {Artifact.PURPLE, Artifact.GREEN, Artifact.PURPLE}, {Artifact.PURPLE, Artifact.PURPLE, Artifact.GREEN}};
 
-    // FIXME: tweak values based on which side, AND ADD real field coordinates
-    static final Position BASKET = new Position(60, 24, 0);
+    // Field Coordinates (Inches)
+    // Assuming 0,0 is center of field or corner? Using provided 60, 24 as a base.
+    // Adjust these based on actual field setup.
+    static final Position BASKET = new Position(60, 24, 0); // TODO: Verify heading for shooting
     static final Position[] BALL_LINES = {
-        new Position(60, 24, 90),
-        new Position(60, 24, 90),
-        new Position(60, 24, 90)
+        new Position(48, 48, 90), // Line 1
+        new Position(48, 24, 90), // Line 2
+        new Position(48, 0, 90)   // Line 3
     };
 
+    // Constants
+    static final int SPIN_DEX_GREEN_POS = 100; // TODO: Tune this
+    static final int SPIN_DEX_PURPLE_POS = 200; // TODO: Tune this
+    static final int CAMERA_WIDTH = 320;
+    static final int CAMERA_HEIGHT = 240;
+    static final int CAMERA_CENTER_X = CAMERA_WIDTH / 2;
+    static final double BALL_CAPTURE_AREA = 5000; // TODO: Tune this threshold
+
+    // hardware
     Robot robot;
     HuskyLens huskylens;
+    
+    // Promoted motors for direct access
+    RealMotor leftIntake, rightIntake, leftOuttake, rightOuttake;
 
-    public static class Ball {
-        public final Artifact artifact;
-        public final HuskyLens.Block block;
-
-        public Ball(Artifact artifact, HuskyLens.Block block) {
-            this.artifact = artifact;
-            this.block = block;
-        }
-    }
+    // flags
+    Artifact[] artifactOrder;
 
     @Override
     public void runOpMode() {
+        // hardware init
         huskylens = hardwareMap.get(HuskyLens.class, "huskylens");
         DcMotor lf = hardwareMap.get(DcMotor.class, "leftFront");
         DcMotor rf = hardwareMap.get(DcMotor.class, "rightFront");
@@ -48,19 +56,25 @@ public class BallChase extends LinearOpMode {
         DcMotor ri = hardwareMap.get(DcMotor.class, "rightIntakeMotor");
         DcMotor lo = hardwareMap.get(DcMotor.class, "leftOuttakeMotor");
         DcMotor ro = hardwareMap.get(DcMotor.class, "rightOuttakeMotor");
-
+        
         RealMotor leftFront = new RealMotor(lf);
         RealMotor rightFront = new RealMotor(rf);
         RealMotor leftBack = new RealMotor(lb);
         RealMotor rightBack = new RealMotor(rb);
-
-        RealMotor leftIntake = new RealMotor(li);
-        RealMotor rightIntake = new RealMotor(ri);
-        RealMotor leftOuttake = new RealMotor(lo);
-        RealMotor rightOuttake = new RealMotor(ro);
-
+        
+        // Initialize class fields
+        leftIntake = new RealMotor(li);
+        rightIntake = new RealMotor(ri);
+        leftOuttake = new RealMotor(lo);
+        rightOuttake = new RealMotor(ro);
+        
         robot = new Robot(leftFront, rightFront, leftBack, rightBack, leftIntake, rightIntake, leftOuttake, rightOuttake, 0, 0, 0); // FIXME: CHANGE ACCORDING TO WHERE WE START
         robot.resetPID();
+
+        // Initialize Outtake Motors for RunToPosition
+        leftOuttake.setMode(Motor.RunMode.STOP_AND_RESET_ENCODER);
+        rightOuttake.setMode(Motor.RunMode.STOP_AND_RESET_ENCODER);
+        // We set mode in spinDex method
 
         telemetry.addLine("Waiting...");
         telemetry.update();
@@ -70,44 +84,48 @@ public class BallChase extends LinearOpMode {
 
         huskylens.selectAlgorithm(HuskyLens.Algorithm.TAG_RECOGNITION);
 
-        // SET BALL ORDER
-        Artifact[] artifactOrder = ARTIFACT_ORDERS[0]; // set 0 as default
-        while (opModeIsActive()) {
+        // set ball order based on apriltag
+        artifactOrder = ARTIFACT_ORDERS[0]; // set 0 as default
+        long tagTimeout = System.currentTimeMillis() + 3000; // 3 sec timeout
+        while (opModeIsActive() && System.currentTimeMillis() < tagTimeout) {
             int tag = SetAprilTag();
-            if (tag != -1) { // actually set it once found
-                artifactOrder = ARTIFACT_ORDERS[tag];
-                break;
+            if (tag != -1) { // set it once found
+                if (tag >= 0 && tag < ARTIFACT_ORDERS.length) {
+                    artifactOrder = ARTIFACT_ORDERS[tag];
+                    telemetry.addData("Tag Found", tag);
+                    telemetry.update();
+                    break;
+                }
             }
         }
 
+        // Initial Score (Preload)
+        lebron();
+
         huskylens.selectAlgorithm(HuskyLens.Algorithm.OBJECT_RECOGNITION);
 
-        /*
-        for ball lines {
-
-            go to ball line N
-
-
-
-            go the shooter
-            shoot in the right order
-
-        }
-        */
-
+        // go to ball position
         for (Position linePos : BALL_LINES) {
             goTo(linePos); // move to position
 
             robot.intakeSystem.spin(1.0);
 
-            // collect balls / track colours in what space of the spin-dex
+            for (int x = 0; x < 3; x++) {
+                Ball currBall = getBall();
+                if (currBall == null) break; // No ball found, move on
 
-            goTo(BASKET);
+                // Chase and acquire ball
+                chaseBall(currBall);
 
-            for (Artifact targetColor : artifactOrder) {
-                // spin spin-dex to position
-                robot.outtakeSystem.spin(1.0);
+                // Store ball logic
+                robot.intakeSystem.stop(); // Stop intake momentarily to sort
+                spinDex(currBall.artifact); // Rotate to correct slot
+                robot.intakeSystem.spin(1.0); // Resume intake to pull it in fully
+                sleep(500); // Wait for ball to settle
             }
+            
+            robot.intakeSystem.stop();
+            lebron();
         }
     }
 
@@ -130,46 +148,123 @@ public class BallChase extends LinearOpMode {
     private Ball getBall() {
         HuskyLens.Block best = null;
         double bestArea = 0;
+        long timeout = System.currentTimeMillis() + 2000; // 2 sec timeout to find a ball
 
-        while (opModeIsActive()) {
+        while (opModeIsActive() && System.currentTimeMillis() < timeout) {
             HuskyLens.Block[] blocks = huskylens.blocks();
-            if (blocks == null) continue; // go to next iteration if no blocks found
+            if (blocks == null || blocks.length == 0) continue;
 
             // find the block with the largest area on camera screen
             for (HuskyLens.Block b : blocks) {
                 double area = b.width * b.height;
-                if (!(area > bestArea)) continue; // skip if area is too small
-
-                bestArea = area;
-                best = b;
+                if (area > bestArea) {
+                    bestArea = area;
+                    best = b;
+                }
             }
-
-            // another failsafe if no blocks found
-            if (best == null) {
-                telemetry.addLine("Looking for a ball...");
-                telemetry.update();
-                sleep(40);
-
-                continue;
-            }
-
-            // setting the type of artifact based on ID
-            Artifact artifactType;
-            switch (best.id) {
-                case 1:
-                    artifactType = Artifact.GREEN;
-                    break;
-                case 2:
-                    artifactType = Artifact.PURPLE;
-                    break;
-                default:
-                    artifactType = Artifact.offset;
-                    break;
-            }
-            return new Ball(artifactType, best);
+            
+            if (best != null) break;
         }
 
-        return null; // ANOTHER failsafe
+        if (best == null) {
+            telemetry.addLine("No ball found.");
+            telemetry.update();
+            return null;
+        }
+
+        // setting the type of artifact based on ID
+        Artifact artifactType;
+        switch (best.id) {
+            case 1:
+                artifactType = Artifact.GREEN;
+                break;
+            case 2:
+                artifactType = Artifact.PURPLE;
+                break;
+            default:
+                artifactType = Artifact.offset; // Using offset as 'unknown' or default
+                break;
+        }
+        return new Ball(artifactType, best);
+    }
+
+    private void chaseBall(Ball ball) {
+        // Simple P-controller for centering
+        double kP_turn = 0.005;
+        double speed = 0.3;
+        
+        while (opModeIsActive()) {
+            // Update ball info from camera
+            HuskyLens.Block[] blocks = huskylens.blocks();
+            HuskyLens.Block currentBlock = null;
+            
+            // Find the same ball (by ID or roughly same position/size)
+            // For simplicity, just find largest block of same ID
+            double maxArea = 0;
+            for (HuskyLens.Block b : blocks) {
+                 if (b.id == ball.block.id) { // Assuming ID matches color
+                     double area = b.width * b.height;
+                     if (area > maxArea) {
+                         maxArea = area;
+                         currentBlock = b;
+                     }
+                 }
+            }
+
+            if (currentBlock == null) {
+                // Lost ball, maybe we got it?
+                break; 
+            }
+            
+            double area = currentBlock.width * currentBlock.height;
+            if (area > BALL_CAPTURE_AREA) {
+                // Close enough to intake
+                // Drive forward a bit more to ensure intake
+                robot.driveDirection(Math.PI/2, 0.3, robot.getState().heading); // Drive forward relative to robot
+                sleep(500);
+                robot.driveSystem.stop();
+                break;
+            }
+
+            // Calculate error
+            double errorX = CAMERA_CENTER_X - currentBlock.x;
+            double turnPower = errorX * kP_turn;
+
+            // Drive forward and turn
+            // Using driveMecanum directly for robot-centric control
+            // x is forward/back, y is strafe, omega is turn
+            // Note: Robot class driveDirection uses field centric usually, but we want robot centric here.
+            // Let's use driveSystem directly if possible or create a robot-centric method.
+            // Looking at Robot.java, driveMecanum takes (x, y, omega). 
+            // Assuming x is forward? Need to check DriveSystem but usually x/y are standard.
+            // Let's assume x is forward for now based on standard mecanum.
+            
+            robot.driveSystem.driveMecanum(speed, 0, turnPower); 
+            robot.driveSystem.updateSim(0.02);
+        }
+        robot.driveSystem.stop();
+    }
+
+    private void spinDex(Artifact color) { // TODO: change this to actual robot
+        int targetPos = 0;
+        if (color == Artifact.GREEN) {
+            targetPos = SPIN_DEX_GREEN_POS;
+        } else if (color == Artifact.PURPLE) {
+            targetPos = SPIN_DEX_PURPLE_POS;
+        }
+        
+        // Move both outtake motors (assuming they are coupled or need to move together)
+        leftOuttake.setTargetPosition(targetPos);
+        rightOuttake.setTargetPosition(targetPos);
+        
+        leftOuttake.setMode(Motor.RunMode.RUN_TO_POSITION);
+        rightOuttake.setMode(Motor.RunMode.RUN_TO_POSITION);
+        
+        leftOuttake.setPower(0.5);
+        rightOuttake.setPower(0.5);
+        
+        // Optional: Wait for completion or just let it run in background
+        // sleep(500); 
     }
 
     private boolean moveRobot(Position target) {
@@ -179,7 +274,7 @@ public class BallChase extends LinearOpMode {
         double dx = target.x - state.x;
         double dy = target.y - state.y;
 
-        if (Math.hypot(dx, dy) < 1.0) {
+        if (Math.hypot(dx, dy) < 2.0) { // Increased tolerance slightly
             telemetry.addData("Position Reached", "x: %.2f, y: %.2f, heading: %.2f", state.x, state.y, state.heading);
             telemetry.update();
 
@@ -191,5 +286,18 @@ public class BallChase extends LinearOpMode {
 
     private void goTo(Position target) {
         while (opModeIsActive()) if (moveRobot(target)) break;
+        robot.driveSystem.stop();
+    }
+
+    private void lebron() { // go to basket and shoot
+        goTo(BASKET);
+
+        for (Artifact targetColor : artifactOrder) {
+            spinDex(targetColor);
+            sleep(500); // Wait for spin-dex
+            robot.outtakeSystem.spin(1.0); // Shoot
+            sleep(500); // Wait for shot
+            robot.outtakeSystem.stop();
+        }
     }
 }
