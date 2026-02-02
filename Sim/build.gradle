@@ -1,15 +1,19 @@
-apply plugin: 'com.android.library'
+apply plugin: 'java'
 
-android {
-    namespace "com.yourteam.sim"
-    compileSdkVersion 33
-
-    defaultConfig {
-        minSdkVersion 23
-        targetSdkVersion 33
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java', '../TeamCode/src/main/java']
+            include 'com/duck123acb/sim/**'
+            include 'com/duck123acb/robotcore/**'
+        }
     }
 }
 
+repositories {
+    mavenCentral()
+}
+
 dependencies {
-    implementation project(':TeamCode')
+    implementation 'com.google.code.gson:gson:2.10.1'
 }
