@@ -31,10 +31,10 @@ public class TurretSystem extends PIDControl{
     }
 
     @Override
-    public double getCurrentValue(){ return husky.getAprilTagOffset(); }
+    public double getCurrentValue(){return husky.getAprilTagOffset(); }
 
     @Override
-    public void applyOutput(double output){ turretMotor.setPower(output);}
+    public void applyOutput(double output){turretMotor.setPower(output);}
 
 
     public void continousUpdate(){

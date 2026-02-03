@@ -8,10 +8,10 @@ public class DriveTrain {
     private double  speedScalar = 0.0;
 
     // initialize motors
-    public DcMotor frontLeftMotor;
-    public DcMotor frontRightMotor;
-    public DcMotor backLeftMotor;
-    public DcMotor backRightMotor;
+    private DcMotor frontLeftMotor;
+    private DcMotor frontRightMotor;
+    private DcMotor backLeftMotor;
+    private DcMotor backRightMotor;
 
 
     public void init(HardwareMap hwMap){
@@ -50,7 +50,10 @@ public class DriveTrain {
         return rad;
     }
 
-    public void fieldOrientedTranslate(double targetPowerX, double targetPowerY, double rotation, double currentRotation) {
+    public void fieldOrientedTranslate(double targetPowerX,
+                                       double targetPowerY,
+                                       double rotation,
+                                       double currentRotation) {
 
         // direction robot is facing, in radians
         double robotYawRad = angleWrapRad(Math.toRadians(currentRotation));
@@ -65,14 +68,15 @@ public class DriveTrain {
         double power = Math.hypot(targetPowerX, targetPowerY);
 
         // restricting power between [-1, 1] because of a bug:
-        // if |targetPowerX|, |targetPowerY| = 1, then power would be |√2| > 1.
-        // Ergo resulting in inefficiencies as motor power is [-1, 1]
-        // Note that for now, power is always positive, hence we need not clip it between [-1, 1]
+        // if |targetPowerX|, |targetPowerY| = 1, power = |√2| > 1.
+        //However, motor power is [-1, 1]
         power = Range.clip(power, 0.0, 1.0);
 
         // sin, cos of corrected angle, accounting for mecanum offset
         double sin = Math.sin(thetaRad - Math.PI/4);
         double cos = Math.cos(thetaRad - Math.PI/4);
+
+        // Essentially, sin, cos, are the vertical, horizontal vectors that comprise theta
 
         double maxSinCos = Math.max(Math.abs(sin), Math.abs(cos));
 
@@ -80,12 +84,6 @@ public class DriveTrain {
         double frontLeftPower;
         double backRightPower;
         double backLeftPower;
-
-
-    //      Essentially, sin and cos are representative of the vertical and
-    //      horizontal vectors that comprise the vector of
-    //      the angle theta. By applying sin to the power of one set of wheels,
-    //      and cos to other, we recreate that vector.
 
         if (1e-6 > maxSinCos) maxSinCos = 1; // avoid division by 0
 
@@ -120,15 +118,17 @@ public class DriveTrain {
             backRightMotor.setPower(backRightPower * speedScalar);
         }
     }
-    // android studio was complaining about the complex if statement
+
+
+//     android studio was complaining about the complex if statement
     private boolean motorsNotNull() {
 
         return  null != frontLeftMotor && null != frontRightMotor &&
                 null != backLeftMotor && null != backRightMotor;
     }
 
-    // practically same logic as fieldOrientedTranslate(),
-    // just without angle math
+//     practically same logic as fieldOrientedTranslate(),
+//     just without angle math
     public void robotOrientedTranslate(double targetPowerX, double targetPowerY, double rotation){
 
         double thetaRad = Math.atan2(targetPowerY, targetPowerX);
@@ -175,6 +175,121 @@ public class DriveTrain {
             backRightMotor.setPower(backRightPower * speedScalar);
         }
     }
+
+
+//    /**
+//     *
+//     * @param targetPowerX x component of left joystick
+//     * @param targetPowerY y component of left
+//     * @param rotation x component of right joystick
+//     * @param currentRotation robot yaw
+//     */
+//    public void fieldOrientedTranslate(double targetPowerX,
+//                                       double targetPowerY,
+//                                       double rotation,
+//                                       double currentRotation){
+//
+//        double robotYawRad = angleWrapRad(Math.toRadians(currentRotation));
+//        double stickRotationRad = Math.atan2(targetPowerX, targetPowerY);
+//        double thetaRad = stickRotationRad - robotYawRad;
+//        double power = Math.hypot(targetPowerX, targetPowerY);
+//
+//        double[] motorPowers = this.calculateMotorPower(power, rotation, thetaRad);
+//        applyPower(motorPowers);
+//
+//    }
+//
+//
+//    /**
+//     *
+//     * @param targetPowerX x component of left joystick
+//     * @param targetPowerY y component of left joystick
+//     * @param rotation x component of right joystick
+//     */
+//    public void robotOrientedTranslate(double targetPowerX,
+//                                       double targetPowerY,
+//                                       double rotation){
+//
+//        double thetaRad = Math.atan2(targetPowerX, targetPowerY);
+//        double power = Math.hypot(targetPowerX, targetPowerY);
+//
+//        double[] motorPowers = calculateMotorPower(power, rotation, thetaRad);
+//        applyPower(motorPowers);
+//
+//    }
+//
+//    /**
+//     *
+//     * @param initialPower initial power calculation that is to be corrected, mapped to [0, 1]
+//     * @param rotation x component of the right joystick
+//     * @param thetaRad angle in standard position of the terminal arm of the point (targetPowerX, targetPowerY).
+//     *                 Note theta is [-π, π] because it is calculated using Math.atan2().
+//     * @return an array containing the calculated power for each motor, {frontLeft, frontRight, backLeft, backRight}, respectively.
+//     */
+//    private double[] calculateMotorPower(double initialPower,
+//                                         double rotation,
+//                                         double thetaRad) {
+//
+//        double power = initialPower;
+//
+//        double sin = Math.sin(thetaRad - Math.PI/4);
+//        double cos = Math.cos(thetaRad - Math.PI/4);
+//
+//        double maxSinCos = Math.max(Math.abs(sin), Math.abs(cos));
+//
+//        double frontRightPower;
+//        double frontLeftPower;
+//        double backRightPower;
+//        double backLeftPower;
+//
+//        if (1e-6 > maxSinCos) maxSinCos = 1;
+//
+//        frontLeftPower =    power*sin/maxSinCos + rotation;
+//        backLeftPower =     power*cos/maxSinCos + rotation;
+//
+//        frontRightPower =   power*cos/maxSinCos - rotation;
+//        backRightPower =    power*sin/maxSinCos - rotation;
+//
+//        double frontMax = Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower));
+//        double backMax = Math.max(Math.abs(backLeftPower), Math.abs(backRightPower));
+//
+//        double maxPower = Math.max(frontMax, backMax);
+//
+//        if (1.0 < maxPower){
+//
+//            frontLeftPower /= maxPower;
+//            frontRightPower /= maxPower;
+//
+//            backLeftPower /= maxPower;
+//            backRightPower /= maxPower;
+//        }
+//
+//        double[] motorPowers = {frontLeftPower, frontRightPower, backLeftPower, backRightPower};
+//
+//        return motorPowers;
+//    }
+//
+//    /**
+//     *
+//     * @param motorPowers a 4-element array, {frontLeft, frontRight, backLeft, backRight}
+//     */
+//    private final void applyPower(double[] motorPowers){
+//
+//        if (!this.motorsNotNull()) return;;
+//        if (4 != motorPowers.length) return;
+//
+//        frontLeftMotor.setPower(motorPowers[0]);
+//        frontRightMotor.setPower(motorPowers[1]);
+//
+//        backLeftMotor.setPower(motorPowers[2]);
+//        backRightMotor.setPower(motorPowers[3]);
+//    }
+
+
+    /**
+     *
+     * @param change new value for power correction
+     */
     public final void setSpeedScalar(double change) {
         // serves as a slowdown -> easier control for driver
         speedScalar = Range.clip(change, 0.0, 1.0);

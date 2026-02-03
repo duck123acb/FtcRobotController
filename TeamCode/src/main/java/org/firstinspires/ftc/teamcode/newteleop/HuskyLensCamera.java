@@ -3,26 +3,15 @@ package org.firstinspires.ftc.teamcode.newteleop;
 import com.qualcomm.hardware.dfrobot.HuskyLens;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-/**
- * Handles requests to and returns from the Husky Lens.
- * As of current, is lacking in utilization apart from
- * in RobotFunctions. Will eventually be big component
- * of Autonomous.
- */
+
+
 
 public class HuskyLensCamera {
     private HuskyLens   huskyLens;
-    public enum         HLMode {
-        TAG_RECOGNITION,
-        FACE_RECOGNITION,
-        OBJECT_TRACKING,
-        COLOR_RECOGNITION,
-        OBJECT_RECOGNITION
-    }
-    private HLMode   currentMode = HLMode.TAG_RECOGNITION;
+
+    HLMode   currentMode = HLMode.TAG_RECOGNITION;
     private double  tagWidthPx;
     private double  tagHeightPx;
-
 
     public void init(HardwareMap hwMap) {
 
@@ -31,7 +20,7 @@ public class HuskyLensCamera {
     }
 
     //TODO: Change this code, its ugly.
-    private void setHuskyMode(HLMode currentMode) {
+    public void setHuskyMode(HLMode currentMode) {
 
         switch (currentMode) {
             case OBJECT_TRACKING:
@@ -54,15 +43,6 @@ public class HuskyLensCamera {
         }
     }
 
-    public void setModeUsingIndex(int index){
-
-        if (0 > index || HLMode.values().length < index) { return; }
-
-        currentMode = HLMode.values()[index];
-        setHuskyMode(currentMode);
-
-    }
-
 
     public int readAndDecodeAprilTag(){
 
@@ -81,7 +61,7 @@ public class HuskyLensCamera {
 
         if (null != blocks && 0 < blocks.length){
 
-            tagWidthPx = blocks[0].width;
+            tagWidthPx =  blocks[0].width;
             tagHeightPx = blocks[0].height;
         } else {
 

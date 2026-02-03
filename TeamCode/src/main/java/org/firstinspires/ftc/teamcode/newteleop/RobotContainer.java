@@ -9,15 +9,20 @@ import com.qualcomm.robotcore.util.Range;
 
 public class RobotContainer {
 
-    public final IntakeOuttakeSystem    intakeOuttake;
-    public final TurretSystem turret;
-    public final HuskyLensCamera        husky = new HuskyLensCamera();
+    private final IntakeOuttakeSystem   intakeOuttake;
+    private final TurretSystem          turret;
+    private final Spindexer             spindexer;
+    private final HuskyLensCamera       husky = new HuskyLensCamera();
     private ElapsedTime                 timer = new ElapsedTime();
 
     //TODO: Tune Kp, Kd, Ki
-    private final double    Kp = 1.0;
-    private final double    Kd = 1.0;
-    private final double    Ki = 1.0;
+    private final double    tKp = 1.0;
+    private final double    tKd = 1.0;
+    private final double    tKi = 1.0;
+    private final double sKp = 1.0;
+    private final double sKd = 1.0;
+    private final double sKi = 1.0;
+
 
     private static final double STANDARD_INTAKE_POWER = 0.5;
     private static double standardOuttakePower = 1.0; // 1 by default, will be calculable later
@@ -38,6 +43,8 @@ public class RobotContainer {
     //Construction
     //----------------------------------------------------------------------------------------------
 
+
+
     public RobotContainer(HardwareMap hwMap){
 
         husky.init(hwMap);
@@ -48,10 +55,18 @@ public class RobotContainer {
                 hwMap.get(Servo.class, "launchServo")
         );
 
+        spindexer = new Spindexer(
+                hwMap.get(DcMotor.class, "spinMotor"),
+                sKp,
+                sKi,
+                sKd,
+                timer
+        );
+
         turret = new TurretSystem(
-                Kp,
-                Ki,
-                Kd,
+                tKp,
+                tKi,
+                tKd,
                 timer,
                 husky,
                 hwMap.get(DcMotor.class, "turretMotor")
@@ -78,40 +93,54 @@ public class RobotContainer {
     // HuskyLensCamera wrappers
     //----------------------------------------------------------------------------------------------
     public final boolean checkForTagRecognition(){ return husky.isTagRecognition();}
-    public void selectHuskyMode(int mode){ husky.setModeUsingIndex(mode);}
+    public void selectHuskyMode(HLMode mode){ husky.setHuskyMode(mode);}
+
+    public HLMode getCurrentMode() { return husky.currentMode; }
 
     // ---------------------------Miscellaneous----------------------------------------------------
-
-    public double calculateDistance(){
+//TODO: Make more accurate using horizontal
+    private double calculateDistance(){
 
         // Standard -1 protocol if no tag is detected
-        if (-1 == husky.getTagHeight()) {return -1.0;}
+        if (-1 == husky.getTagHeight()) return -1.0;
 
         double heightPx = husky.getTagHeight();
+        double widthPx = husky.getTagWidth();
+        double distanceMeters = 0;
 
         // determine the proportion of the screen occupied by the AprilTag using the total height of
         // the screen in pixels
-        double fractionOfScreenHeight = heightPx / HUSKY_HEIGHT_PIXELS;
+        final double scrHeightFrac = heightPx / HUSKY_HEIGHT_PIXELS;
+        final double scrWidthFrac = widthPx / HUSKY_WIDTH_PIXELS;
 
         // by knowing the dimensions of the April Tag (6.5 x 6.5 inches) we can roughly determine
         // the real height of the image by comparing the proportion occupied by the screen in pixels
         // to what it should be in inches.
-        double screenWidthInches = APRIL_TAG_DIMENSIONS_INCHES / fractionOfScreenHeight;
+        double scrHeightInches = APRIL_TAG_DIMENSIONS_INCHES / scrHeightFrac;
+        double scrWidthInches = APRIL_TAG_DIMENSIONS_INCHES / scrWidthFrac;
 
         // we can then imagine the distance as a line that bisects the FOV of the husky lens, which
-        // in turn perpendicularly bisects screenWidthInches.
+        // in turn perpendicularly bisects screenHeightInches.
         double halfFOVRadians = Math.toRadians(HUSKY_FOV_DEGREES / 2);
 
-        // Now, we can observe that tan(halfFOVRadians) = ( 0.5 * screenWidthInches) / distance;
+        // Now, we can observe that tan(halfFOVRadians) = ( 0.5 * screenHeightInches) / distance;
         // we can then rearrange to find distance.
-        double distanceInches = (screenWidthInches / 2) / Math.tan(halfFOVRadians);
+        double hDistanceInches = (scrHeightInches / 2) / Math.tan(halfFOVRadians);
+        double wDistanceInches = (scrWidthInches / 2) / Math.tan(halfFOVRadians);
+
+        if (isRelative(hDistanceInches,wDistanceInches)) {
+            distanceMeters = hDistanceInches / inchesToMeters;
+            return distanceMeters;
+        }
 
         //Convert to meters, more useful
-        double distanceMeters = distanceInches / inchesToMeters;
 
         return  distanceMeters;
     }
 
+    private boolean isRelative(double first, double second ){
+        return Math.abs((first - second) )/ 2 < 1;
+    }
 
     /**Presumptions for this distance power application
      * Weight of the ball is negligible
@@ -126,7 +155,7 @@ public class RobotContainer {
 
         final double distance = calculateDistance();
 
-        if (0 >= distance) {
+        if (0 <= distance) {
             standardOuttakePower = 1.0;
             return;
         }
@@ -166,5 +195,14 @@ public class RobotContainer {
 
         standardOuttakePower = Range.clip(theoreticalPower, 0.0, 1.0);
     }
+
+
+    //----------------------------------------------------------------------------------------------
+    // State checkers
+    //----------------------------------------------------------------------------------------------
+
+    public boolean isIOInit() {return null != intakeOuttake; };
+    public boolean isTurretInit(){ return null != turret; };
+    public boolean isHuskyInit(){ return null != husky; };
 
 }

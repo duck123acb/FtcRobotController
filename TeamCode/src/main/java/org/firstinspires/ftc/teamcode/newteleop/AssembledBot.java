@@ -3,8 +3,7 @@ package org.firstinspires.ftc.teamcode.newteleop;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-
-import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import com.qualcomm.robotcore.util.Range;
 
 
 /**
@@ -14,15 +13,10 @@ import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 @TeleOp
 public class AssembledBot extends LinearOpMode{
 
-    //private RobotContainer  robot;
+    private RobotContainer  robot;
     private DriveTrain dt = new DriveTrain();
     private IMUOdometry imu = new IMUOdometry();
-
-    private  static final int   OBJECT_TRACKING = 0;
-    private  static final int   FACE_RECOGNITION = 1;
-    private  static final int   COLOR_RECOGNITION = 2;
-    private  static final int   OBJECT_RECOGNITION = 3;
-    private  static final int   TAG_RECOGNITION = 4;
+    private HLMode hlMode;
     private static double       driveScalar = 1.0;
 
     @Override
@@ -30,32 +24,37 @@ public class AssembledBot extends LinearOpMode{
 
         dt.init(hardwareMap);
         imu.init(hardwareMap);
-        //robot = new RobotContainer(hardwareMap);
+        robot = new RobotContainer(hardwareMap);
 
         waitForStart();
 
 
         double heading = 0;
-     //    robot.selectHuskyMode(TAG_RECOGNITION);
+        robot.selectHuskyMode(hlMode.TAG_RECOGNITION);
 
         while (opModeIsActive()){
 
-            double rightJoyStickX = gamepad2.left_stick_x;
-            double rightJoyStickY = -gamepad2.left_stick_y;
-            double leftJoystickX = gamepad2.right_stick_x;
+            double rightJoyStickX = gamepad1.left_stick_x;
+            double rightJoyStickY = -gamepad1.left_stick_y;
+            double leftJoystickX = gamepad1.right_stick_x;
 
-//            boolean intakeButton = gamepad2.left_bumper;
-//            boolean outtakeButton = gamepad2.right_bumper;
-//            boolean servoTrigger = gamepad2.a;
-//            boolean reverseOuttake = gamepad2.b;
+            boolean intakeButton = gamepad1.left_bumper;
+            boolean outtakeButton = gamepad1.right_bumper;
+            boolean servoTrigger = gamepad1.a;
+            boolean incrementDriveScalar = gamepad1.dpad_up;
+            boolean decrementDriveScalar = gamepad1.dpad_down;
 
+            if (incrementDriveScalar) driveScalar += 0.1;
+            if (decrementDriveScalar) driveScalar -= 0.1;
 
+            driveScalar = Range.clip(driveScalar, 0, 1);
+            
 
-        //    robot.useIntake(intakeButton);
-        //    robot.useOuttake(outtakeButton);
-        //    robot.setServoState(servoTrigger);
+            robot.useIntake(intakeButton);
+            robot.useOuttake(outtakeButton);
+            robot.setServoState(servoTrigger);
 
-        //    if (robot.checkForTagRecognition())  robot.updateTurret();
+            if (robot.checkForTagRecognition())  robot.updateTurret();
             if (null != imu) {heading  = imu.getContinuousHeadingDeg();}
 
 
@@ -68,20 +67,27 @@ public class AssembledBot extends LinearOpMode{
             );
 
             telemetyStuff();
-
-        //    if (reverseOuttake) { robot.intakeOuttake.reverseOuttake();}
         }
     }
 
     private void telemetyStuff(){
         if (null == imu) {return;}
 
-        double c = imu.getContinuousHeadingDeg();
-        YawPitchRollAngles o = imu.getRobotOrientation();
-        telemetry.addData("Current Heading", c);
-        telemetry.addData("Orientation", o );
-        telemetry.update();
+        if (null != dt) telemetry.addLine("DriveTrain initialized");
+        if (null != imu) {
+            telemetry.addLine("IMU initialized");
+            telemetry.addData("Orientation", imu.getRobotOrientation());
+            telemetry.addData("ContinuousYaw", imu.getContinuousHeadingDeg());
+        }
+        if (robot.isIOInit()) telemetry.addLine("IO initialized");
+        if (robot.isTurretInit()) telemetry.addLine("Turret initialized");
+        if (robot.isHuskyInit()) {
 
+            telemetry.addLine("Husky initialized");
+            telemetry.addData("Husky mode:", robot.getCurrentMode());
+        }
+
+        telemetry.update();
     }
 }
 

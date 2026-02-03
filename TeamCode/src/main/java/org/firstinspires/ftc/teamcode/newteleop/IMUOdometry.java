@@ -94,12 +94,13 @@ public class IMUOdometry {
                         RevHubOrientationOnRobot.UsbFacingDirection.UP
                 )
         );
+
         imu.initialize(parameters);
     }
 
-    /*------------------------------------------------------------------
-    Getters
-     ------------------------------------------------------------------*/
+    //------------------------------------------------------------------
+    //Getters
+    // ------------------------------------------------------------------
     public YawPitchRollAngles getRobotOrientation() {return imu.getRobotYawPitchRollAngles();}
     private double getHeadingDeg() {return imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);}
     public double getRollDeg() {return imu.getRobotYawPitchRollAngles().getRoll(AngleUnit.DEGREES);}

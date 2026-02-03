@@ -7,6 +7,9 @@ public class ServoTest extends LinearOpMode {
 
     Servo servo;
 
+    double[] arr;
+
+
 
     public void runOpMode() throws InterruptedException{
 
