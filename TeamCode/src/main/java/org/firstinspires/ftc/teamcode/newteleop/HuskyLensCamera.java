@@ -19,7 +19,7 @@ public class HuskyLensCamera {
         huskyLens.selectAlgorithm(HuskyLens.Algorithm.TAG_RECOGNITION);
     }
 
-    //TODO: Change this code, its ugly.
+
     public void setHuskyMode(HLMode currentMode) {
 
         switch (currentMode) {
@@ -41,6 +41,7 @@ public class HuskyLensCamera {
             default:
                 System.out.println("whatever");
         }
+        this.currentMode = currentMode;
     }
 
 
@@ -70,6 +71,13 @@ public class HuskyLensCamera {
         }
     }
 
+
+    public void trackArtifact() {
+
+        setHuskyMode(HLMode.OBJECT_RECOGNITION);
+
+
+    }
     public double getTagWidth(){ return tagWidthPx;}
     public double getTagHeight(){ return tagHeightPx;}
     public int getTagID(){ return readAndDecodeAprilTag();}
@@ -88,5 +96,5 @@ public class HuskyLensCamera {
     }
 
     // Is the Husky Lens set to tag recognition?
-    public final boolean isTagRecognition() {return HLMode.TAG_RECOGNITION == currentMode;}
+    public final boolean isTagRecognition() {return HLMode.TAG_RECOGNITION == this.currentMode;}
 }

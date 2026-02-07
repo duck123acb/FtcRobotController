@@ -52,7 +52,7 @@ public class Spindexer extends PIDControl{
      *
      * @param degrees directional rotation in degrees
      */
-    void rotate(double degrees) {
+    public void rotate(double degrees) {
 
         double current = getCurrentValue();
         double offset = (degrees/360) * TICKS_PER_ROTATION;
@@ -74,6 +74,6 @@ public class Spindexer extends PIDControl{
 
 
     private boolean isMotor(){ return null != spinMotor; }
-
+    public boolean isBusy() { return spinMotor.isBusy(); }
 
 }

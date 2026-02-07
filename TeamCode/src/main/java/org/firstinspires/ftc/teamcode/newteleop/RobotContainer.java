@@ -6,6 +6,14 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.newteleop.eventschedule.ScheduleIntakeOuttake;
+import org.firstinspires.ftc.teamcode.newteleop.eventschedule.ScheduleSpindexer;
+import org.firstinspires.ftc.teamcode.newteleop.eventschedule.ScheduledEvent;
+import org.firstinspires.ftc.teamcode.newteleop.eventschedule.Scheduler;
+
+import java.util.ArrayList;
+
 
 public class RobotContainer {
 
@@ -14,14 +22,18 @@ public class RobotContainer {
     private final Spindexer             spindexer;
     private final HuskyLensCamera       husky = new HuskyLensCamera();
     private ElapsedTime                 timer = new ElapsedTime();
+    private  final Telemetry telemetry;
+
+    private Scheduler scheduler = new Scheduler();
+
 
     //TODO: Tune Kp, Kd, Ki
-    private final double    tKp = 1.0;
-    private final double    tKd = 1.0;
-    private final double    tKi = 1.0;
-    private final double sKp = 1.0;
-    private final double sKd = 1.0;
-    private final double sKi = 1.0;
+    private static final double     tKp = 1.0;
+    private static final double     tKd = 1.0;
+    private static final double     tKi = 1.0;
+    private static final double    sKp = 1.0;
+    private static final double     sKd = 1.0;
+    private static final double sKi = 1.0;
 
 
     private static final double STANDARD_INTAKE_POWER = 0.5;
@@ -32,20 +44,20 @@ public class RobotContainer {
     private static final int GEAR_RATIO = 1;
     private static final double LAUNCH_EFFICIENCY = 0.7;
     private static final double SCORE_HEIGHT_INCHES = 25.5;
-    private static final double inchesToMeters = 39.37;
+    private static final double INCHES_TO_METERS = 0.254;
     private static final int HUSKY_HEIGHT_PIXELS = 240;
     private static final int HUSKY_WIDTH_PIXELS = 320;
     private static final double APRIL_TAG_DIMENSIONS_INCHES = 6.5;
     private static final int HUSKY_FOV_DEGREES = 160;
 
-
+    private boolean typicalOuttakeLoaded = false;
     //----------------------------------------------------------------------------------------------
     //Construction
     //----------------------------------------------------------------------------------------------
 
 
 
-    public RobotContainer(HardwareMap hwMap){
+    private RobotContainer(HardwareMap hwMap, Telemetry telemetry) {
 
         husky.init(hwMap);
 
@@ -71,6 +83,16 @@ public class RobotContainer {
                 husky,
                 hwMap.get(DcMotor.class, "turretMotor")
         );
+
+        this.telemetry = telemetry;
+    }
+
+    /**
+     * @param hwMap hardware map from LinearOpMode
+     * @return new instance of RobotContainer
+     */
+    public static RobotContainer createRobotContainer(HardwareMap hwMap, Telemetry telemetry) {
+        return new RobotContainer(hwMap, telemetry);
     }
 
     //----------------------------------------------------------------------------------------------
@@ -98,7 +120,7 @@ public class RobotContainer {
     public HLMode getCurrentMode() { return husky.currentMode; }
 
     // ---------------------------Miscellaneous----------------------------------------------------
-//TODO: Make more accurate using horizontal
+
     private double calculateDistance(){
 
         // Standard -1 protocol if no tag is detected
@@ -129,7 +151,7 @@ public class RobotContainer {
         double wDistanceInches = (scrWidthInches / 2) / Math.tan(halfFOVRadians);
 
         if (isRelative(hDistanceInches,wDistanceInches)) {
-            distanceMeters = hDistanceInches / inchesToMeters;
+            distanceMeters = hDistanceInches / INCHES_TO_METERS;
             return distanceMeters;
         }
 
@@ -146,12 +168,11 @@ public class RobotContainer {
      * Weight of the ball is negligible
      * No slip; Ball leaves outtake with tangential speed equal to wheel rim  speed
      * Air resistance is negligible
-     * Simply put, because we know the gecko wheel diameter, the launch angle, and the
      */
 
 
     //TODO: Test for accuracy
-    public void setStandardOuttakePower() {
+    public final void setStandardOuttakePower() {
 
         final double distance = calculateDistance();
 
@@ -163,7 +184,7 @@ public class RobotContainer {
         final double g = 9.81;
         final double thetaRad = Math.toRadians(RAMP_LAUNCH_ANGLE_DEGREES);
 
-        final double heightMeters = SCORE_HEIGHT_INCHES * inchesToMeters;
+        final double heightMeters = SCORE_HEIGHT_INCHES * INCHES_TO_METERS;
 
         final double tan = Math.tan(thetaRad);
         final double cos = Math.cos(thetaRad);
@@ -181,7 +202,7 @@ public class RobotContainer {
 
         final double wheelCircumference = Math.PI * GECKO_WHEEL_DIAMETER_METERS;
 
-        // Convert linear velocity → wheel RPM
+        // Convert linear velocity to wheel RPM
         double wheelRPS = velocity / wheelCircumference;
         double wheelRPM = wheelRPS * 60.0;
 
@@ -196,7 +217,95 @@ public class RobotContainer {
         standardOuttakePower = Range.clip(theoreticalPower, 0.0, 1.0);
     }
 
+    //---------------------------------------------------------------------------------------------
+    // Schedule
+    //---------------------------------------------------------------------------------------------
 
+    public void scheduleIOEvent(
+            double power,
+            ScheduleIntakeOuttake.Operations operation,
+            Telemetry telemetry
+    ) {
+        scheduler.addEvent( new ScheduleIntakeOuttake(
+                "RobotContainer",
+                intakeOuttake,
+                power,
+                operation,
+                telemetry
+                )
+        );
+    }
+
+    public void scheduleSpindexerEvent(
+            double turnToPos
+    ) {
+        scheduler.addEvent(
+                new ScheduleSpindexer(
+                     "RobotContainer",
+                        turnToPos,
+                        this.spindexer
+                )
+        );
+    }
+
+    public final void toggleScheduledEventExecution(){ scheduler.allowExecution();}
+
+    public final ArrayList<ScheduledEvent> getSchedule(){ return scheduler.getSchedule(); }
+
+    public void loadTypicalSchedule(){
+
+        final double firstTurn = getCurrentSpindexerPos() + 120;
+        final double secondTurn = firstTurn + 120;
+
+        this.scheduleIOEvent(
+                standardOuttakePower,
+                ScheduleIntakeOuttake.Operations.REV_UP_OUTTAKE,
+                this.telemetry
+        );
+
+        this.scheduleIOEvent(
+                0,
+                ScheduleIntakeOuttake.Operations.LAUNCH_ARTIFACT,
+                telemetry
+        );
+
+        this.scheduleSpindexerEvent( firstTurn );
+
+        this.scheduleIOEvent(
+                0,
+                ScheduleIntakeOuttake.Operations.LAUNCH_ARTIFACT,
+                telemetry
+        );
+
+        this.scheduleSpindexerEvent( secondTurn);
+
+        this.scheduleIOEvent(
+                0,
+                ScheduleIntakeOuttake.Operations.LAUNCH_ARTIFACT,
+                telemetry
+        );
+
+        scheduleIOEvent(
+                0,
+                ScheduleIntakeOuttake.Operations.STOP_OUTTAKE,
+                telemetry
+        );
+
+        this.typicalOuttakeLoaded = true;
+    }
+
+    public boolean isScheduleLoaded() { return typicalOuttakeLoaded; }
+    public void allowExecution() { scheduler.allowExecution(); }
+
+    public void stopExecution() {scheduler.stopExecution();}
+    //---------------------------------------------------------------------------------------------
+    // Spindexer
+    //---------------------------------------------------------------------------------------------
+
+    public void rotate(double degrees) { spindexer.rotate(degrees); }
+    public double getCurrentSpindexerPos(){ return spindexer.getCurrentValue(); }
+
+    public boolean isSpindexerBusy() { return spindexer.isBusy(); }
     //----------------------------------------------------------------------------------------------
     // State checkers
     //----------------------------------------------------------------------------------------------

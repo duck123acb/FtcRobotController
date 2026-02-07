@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode.newteleop;
 
-
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.Range;
@@ -10,27 +9,26 @@ import com.qualcomm.robotcore.util.Range;
  * Main TeleOp Handler.
  */
 
-@TeleOp
+@TeleOp(name= "TeleOp with automatic shooting and switching")
 public class AssembledBot extends LinearOpMode{
 
     private RobotContainer  robot;
     private DriveTrain dt = new DriveTrain();
     private IMUOdometry imu = new IMUOdometry();
-    private HLMode hlMode;
-    private static double       driveScalar = 1.0;
+    private double       driveScalar = 1.0;
 
     @Override
     public void runOpMode() throws InterruptedException {
 
-        dt.init(hardwareMap);
-        imu.init(hardwareMap);
-        robot = new RobotContainer(hardwareMap);
+        this.dt.init(hardwareMap);
+        this.imu.init(hardwareMap);
+        this.robot = RobotContainer.createRobotContainer(hardwareMap, telemetry);
 
-        waitForStart();
+        this.waitForStart();
 
 
         double heading = 0;
-        robot.selectHuskyMode(hlMode.TAG_RECOGNITION);
+        robot.selectHuskyMode(HLMode.TAG_RECOGNITION);
 
         while (opModeIsActive()){
 
@@ -39,10 +37,9 @@ public class AssembledBot extends LinearOpMode{
             double leftJoystickX = gamepad1.right_stick_x;
 
             boolean intakeButton = gamepad1.left_bumper;
-            boolean outtakeButton = gamepad1.right_bumper;
-            boolean servoTrigger = gamepad1.a;
             boolean incrementDriveScalar = gamepad1.dpad_up;
             boolean decrementDriveScalar = gamepad1.dpad_down;
+            boolean randomButton = gamepad1.b;
 
             if (incrementDriveScalar) driveScalar += 0.1;
             if (decrementDriveScalar) driveScalar -= 0.1;
@@ -51,9 +48,15 @@ public class AssembledBot extends LinearOpMode{
             
 
             robot.useIntake(intakeButton);
-            robot.useOuttake(outtakeButton);
-            robot.setServoState(servoTrigger);
 
+
+            if (randomButton && !(robot.isScheduleLoaded())) {
+
+                robot.loadTypicalSchedule();
+                robot.allowExecution();
+            }
+
+            if (robot.getSchedule().isEmpty()) robot.stopExecution();
             if (robot.checkForTagRecognition())  robot.updateTurret();
             if (null != imu) {heading  = imu.getContinuousHeadingDeg();}
 
@@ -71,7 +74,6 @@ public class AssembledBot extends LinearOpMode{
     }
 
     private void telemetyStuff(){
-        if (null == imu) {return;}
 
         if (null != dt) telemetry.addLine("DriveTrain initialized");
         if (null != imu) {
