@@ -27,8 +27,7 @@ public class BallChase extends LinearOpMode {
     };
 
     // Constants
-    static final int SPIN_DEX_GREEN_POS = 100; // TODO: Tune this
-    static final int SPIN_DEX_PURPLE_POS = 200; // TODO: Tune this
+    static final int[] SPIN_DEX_POSITIONS = {0, 100, 200}; // TODO: Tune these
     static final int CAMERA_WIDTH = 320;
     static final int CAMERA_HEIGHT = 240;
     static final int CAMERA_CENTER_X = CAMERA_WIDTH / 2;
@@ -43,6 +42,7 @@ public class BallChase extends LinearOpMode {
 
     // flags
     Artifact[] artifactOrder;
+    Artifact[] spinDexSlots = new Artifact[3];
 
     @Override
     public void runOpMode() {
@@ -114,12 +114,28 @@ public class BallChase extends LinearOpMode {
                 Ball currBall = getBall();
                 if (currBall == null) break; // No ball found, move on
 
+                // Find first empty slot
+                int emptySlot = -1;
+                for (int i = 0; i < spinDexSlots.length; i++) {
+                    if (spinDexSlots[i] == null) {
+                        emptySlot = i;
+                        break;
+                    }
+                }
+
+                if (emptySlot == -1) {
+                    telemetry.addLine("Spin-dex full!");
+                    telemetry.update();
+                    break;
+                }
+
                 // Chase and acquire ball
                 chaseBall(currBall);
 
                 // Store ball logic
                 robot.intakeSystem.stop(); // Stop intake momentarily to sort
-                spinDex(currBall.artifact); // Rotate to correct slot
+                spinDex(emptySlot); // Rotate to correct slot
+                spinDexSlots[emptySlot] = currBall.artifact; // Track ball type
                 robot.intakeSystem.spin(1.0); // Resume intake to pull it in fully
                 sleep(500); // Wait for ball to settle
             }
@@ -245,13 +261,9 @@ public class BallChase extends LinearOpMode {
         robot.driveSystem.stop();
     }
 
-    private void spinDex(Artifact color) { // TODO: change this to actual robot
-        int targetPos = 0;
-        if (color == Artifact.GREEN) {
-            targetPos = SPIN_DEX_GREEN_POS;
-        } else if (color == Artifact.PURPLE) {
-            targetPos = SPIN_DEX_PURPLE_POS;
-        }
+    private void spinDex(int slotIndex) {
+        if (slotIndex < 0 || slotIndex >= SPIN_DEX_POSITIONS.length) return;
+        int targetPos = SPIN_DEX_POSITIONS[slotIndex];
         
         // Move both outtake motors (assuming they are coupled or need to move together)
         leftOuttake.setTargetPosition(targetPos);
@@ -262,9 +274,6 @@ public class BallChase extends LinearOpMode {
         
         leftOuttake.setPower(0.5);
         rightOuttake.setPower(0.5);
-        
-        // Optional: Wait for completion or just let it run in background
-        // sleep(500); 
     }
 
     private boolean moveRobot(Position target) {
@@ -293,11 +302,26 @@ public class BallChase extends LinearOpMode {
         goTo(BASKET);
 
         for (Artifact targetColor : artifactOrder) {
-            spinDex(targetColor);
-            sleep(500); // Wait for spin-dex
-            robot.outtakeSystem.spin(1.0); // Shoot
-            sleep(500); // Wait for shot
-            robot.outtakeSystem.stop();
+            // Find slot containing targetColor
+            int slotToShoot = -1;
+            for (int i = 0; i < spinDexSlots.length; i++) {
+                if (spinDexSlots[i] == targetColor) {
+                    slotToShoot = i;
+                    break;
+                }
+            }
+
+            if (slotToShoot != -1) {
+                spinDex(slotToShoot);
+                sleep(500); // Wait for spin-dex
+                robot.outtakeSystem.spin(1.0); // Shoot
+                sleep(500); // Wait for shot
+                robot.outtakeSystem.stop();
+                spinDexSlots[slotToShoot] = null; // Clear slot
+            } else {
+                telemetry.addData("Warning", "Required color %s not found in spin-dex", targetColor);
+                telemetry.update();
+            }
         }
     }
 }
