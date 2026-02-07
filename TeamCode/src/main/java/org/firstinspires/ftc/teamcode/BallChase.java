@@ -8,6 +8,8 @@ import com.qualcomm.hardware.dfrobot.HuskyLens;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.IMU;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 /**
  * OpMode for the "BallChase" autonomous routine.
@@ -43,6 +45,8 @@ public class BallChase extends LinearOpMode {
     // flags
     Artifact[] artifactOrder;
     Artifact[] spinDexSlots = new Artifact[3];
+    Position currentTarget;
+    IMU imu;
 
     @Override
     public void runOpMode() {
@@ -61,14 +65,18 @@ public class BallChase extends LinearOpMode {
         RealMotor rightFront = new RealMotor(rf);
         RealMotor leftBack = new RealMotor(lb);
         RealMotor rightBack = new RealMotor(rb);
-        
+
+        imu = hardwareMap.get(IMU.class, "imu");
+        // TODO: Initialize IMU parameters (Orientation, etc.) if not done by user
+
         // Initialize class fields
         leftIntake = new RealMotor(li);
         rightIntake = new RealMotor(ri);
         leftOuttake = new RealMotor(lo);
         rightOuttake = new RealMotor(ro);
         
-        robot = new Robot(leftFront, rightFront, leftBack, rightBack, leftIntake, rightIntake, leftOuttake, rightOuttake, 0, 0, 0); // FIXME: CHANGE ACCORDING TO WHERE WE START
+        currentTarget = new Position(0, 0, 0); // Starting position
+        robot = new Robot(leftFront, rightFront, leftBack, rightBack, leftIntake, rightIntake, leftOuttake, rightOuttake, currentTarget.x, currentTarget.y, currentTarget.heading); 
         robot.resetPID();
 
         // Initialize Outtake Motors for RunToPosition
@@ -137,11 +145,28 @@ public class BallChase extends LinearOpMode {
                 spinDex(emptySlot); // Rotate to correct slot
                 spinDexSlots[emptySlot] = currBall.artifact; // Track ball type
                 robot.intakeSystem.spin(1.0); // Resume intake to pull it in fully
-                sleep(500); // Wait for ball to settle
+                sleepMaintain(500); // Wait for ball to settle while maintaining position
             }
             
             robot.intakeSystem.stop();
             lebron();
+        }
+    }
+
+    private void maintainPosition() {
+        if (!opModeIsActive()) return;
+        
+        // Update robot's internal heading from IMU
+        robot.getState().heading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+        
+        // Re-enforce current target
+        robot.goToXY_PID(currentTarget.x, currentTarget.y, currentTarget.heading, 10);
+    }
+
+    private void sleepMaintain(long ms) {
+        long end = System.currentTimeMillis() + ms;
+        while (opModeIsActive() && System.currentTimeMillis() < end) {
+            maintainPosition();
         }
     }
 
@@ -237,7 +262,7 @@ public class BallChase extends LinearOpMode {
                 // Close enough to intake
                 // Drive forward a bit more to ensure intake
                 robot.driveDirection(Math.PI/2, 0.3, robot.getState().heading); // Drive forward relative to robot
-                sleep(500);
+                sleepMaintain(500);
                 robot.driveSystem.stop();
                 break;
             }
@@ -294,8 +319,19 @@ public class BallChase extends LinearOpMode {
     }
 
     private void goTo(Position target) {
-        while (opModeIsActive()) if (moveRobot(target)) break;
+        currentTarget = target;
+        while (opModeIsActive()) {
+            maintainPosition();
+            if (isAtTarget(target)) break;
+        }
         robot.driveSystem.stop();
+    }
+
+    private boolean isAtTarget(Position target) {
+        RobotState state = robot.getState();
+        double dx = target.x - state.x;
+        double dy = target.y - state.y;
+        return Math.hypot(dx, dy) < 2.0; // Tolerance
     }
 
     private void lebron() { // go to basket and shoot
@@ -313,9 +349,9 @@ public class BallChase extends LinearOpMode {
 
             if (slotToShoot != -1) {
                 spinDex(slotToShoot);
-                sleep(500); // Wait for spin-dex
+                sleepMaintain(500); // Wait for spin-dex
                 robot.outtakeSystem.spin(1.0); // Shoot
-                sleep(500); // Wait for shot
+                sleepMaintain(500); // Wait for shot
                 robot.outtakeSystem.stop();
                 spinDexSlots[slotToShoot] = null; // Clear slot
             } else {
