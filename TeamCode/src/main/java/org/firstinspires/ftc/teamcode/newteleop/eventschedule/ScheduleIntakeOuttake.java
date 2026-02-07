@@ -44,10 +44,12 @@ public class ScheduleIntakeOuttake extends ScheduledEvent{
             case REV_UP_OUTTAKE:
 
                 this.intakeOuttakeSystem.applyOuttakePower(power, true);
+                telemetry.addLine("Reving outtake");
                 break;
             case LAUNCH_ARTIFACT:
 
                 this.intakeOuttakeSystem.customExtend(SERVO_LAUNCH_POS);
+                telemetry.addLine("Extending Servo");
                 break;
 
             case STOP_OUTTAKE:
@@ -59,6 +61,7 @@ public class ScheduleIntakeOuttake extends ScheduledEvent{
                 this.telemetry.update();
                 break;
         }
+        telemetry.update();
     }
 
     @Override
@@ -67,10 +70,15 @@ public class ScheduleIntakeOuttake extends ScheduledEvent{
 
             case REV_UP_OUTTAKE:
                 isFinished = timer.milliseconds() >= MS_TO_REV_UP_OUTTAKE;
+                if (isFinished) telemetry.addLine("Outtake revving completed");
                 break;
 
             case LAUNCH_ARTIFACT:
                 isFinished = timer.milliseconds() >= MS_IDLE_FOR_SERVO;
+                if (isFinished) {
+                    intakeOuttakeSystem.close();
+                    telemetry.addLine("Servo should be closed");
+                }
                 break;
 
             case STOP_OUTTAKE:
@@ -81,6 +89,7 @@ public class ScheduleIntakeOuttake extends ScheduledEvent{
                 isFinished = true;
                 break;
         }
+        telemetry.update();
     }
 
     @Override

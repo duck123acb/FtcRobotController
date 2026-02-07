@@ -76,7 +76,16 @@ public class HuskyLensCamera {
 
         setHuskyMode(HLMode.OBJECT_RECOGNITION);
 
+        HuskyLens.Block[] blocks = huskyLens.blocks();
 
+        if (null != blocks && 0 < blocks.length){
+
+            for (int i = blocks.length - 1; i >= 0; i-- ){
+
+                double blockArea = blocks[i].width * blocks[i].height; 
+            }
+
+        }
     }
     public double getTagWidth(){ return tagWidthPx;}
     public double getTagHeight(){ return tagHeightPx;}

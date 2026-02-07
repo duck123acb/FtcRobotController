@@ -236,9 +236,8 @@ public class RobotContainer {
         );
     }
 
-    public void scheduleSpindexerEvent(
-            double turnToPos
-    ) {
+    public void scheduleSpindexerEvent(double turnToPos) {
+
         scheduler.addEvent(
                 new ScheduleSpindexer(
                      "RobotContainer",
@@ -246,6 +245,8 @@ public class RobotContainer {
                         this.spindexer
                 )
         );
+        telemetry.addLine("Added ScheduleSpindexer to schedule");
+        telemetry.update();
     }
 
     public final void toggleScheduledEventExecution(){ scheduler.allowExecution();}
@@ -296,7 +297,6 @@ public class RobotContainer {
 
     public boolean isScheduleLoaded() { return typicalOuttakeLoaded; }
     public void allowExecution() { scheduler.allowExecution(); }
-
     public void stopExecution() {scheduler.stopExecution();}
     //---------------------------------------------------------------------------------------------
     // Spindexer

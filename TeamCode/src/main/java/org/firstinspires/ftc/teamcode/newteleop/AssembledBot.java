@@ -9,10 +9,10 @@ import com.qualcomm.robotcore.util.Range;
  * Main TeleOp Handler.
  */
 
-@TeleOp(name= "TeleOp with automatic shooting and switching")
+@TeleOp(name= "More auto AssembledBot")
 public class AssembledBot extends LinearOpMode{
 
-    private RobotContainer  robot;
+//    private RobotContainer  robot;
     private DriveTrain dt = new DriveTrain();
     private IMUOdometry imu = new IMUOdometry();
     private double       driveScalar = 1.0;
@@ -22,17 +22,17 @@ public class AssembledBot extends LinearOpMode{
 
         this.dt.init(hardwareMap);
         this.imu.init(hardwareMap);
-        this.robot = RobotContainer.createRobotContainer(hardwareMap, telemetry);
+//        this.robot = RobotContainer.createRobotContainer(hardwareMap, telemetry);
 
         this.waitForStart();
 
 
         double heading = 0;
-        robot.selectHuskyMode(HLMode.TAG_RECOGNITION);
+//        robot.selectHuskyMode(HLMode.TAG_RECOGNITION);
 
         while (opModeIsActive()){
 
-            double rightJoyStickX = gamepad1.left_stick_x;
+            double rightJoyStickX = -gamepad1.left_stick_x;
             double rightJoyStickY = -gamepad1.left_stick_y;
             double leftJoystickX = gamepad1.right_stick_x;
 
@@ -47,26 +47,25 @@ public class AssembledBot extends LinearOpMode{
             driveScalar = Range.clip(driveScalar, 0, 1);
             
 
-            robot.useIntake(intakeButton);
+//            robot.useIntake(intakeButton);
 
 
-            if (randomButton && !(robot.isScheduleLoaded())) {
-
-                robot.loadTypicalSchedule();
-                robot.allowExecution();
-            }
-
-            if (robot.getSchedule().isEmpty()) robot.stopExecution();
-            if (robot.checkForTagRecognition())  robot.updateTurret();
+//            if (randomButton && !(robot.isScheduleLoaded())) {
+//
+//                robot.loadTypicalSchedule();
+//                robot.allowExecution();
+//            }
+//
+//            if (robot.getSchedule().isEmpty()) robot.stopExecution();
+//            if (robot.checkForTagRecognition())  robot.updateTurret();
             if (null != imu) {heading  = imu.getContinuousHeadingDeg();}
 
 
             dt.setSpeedScalar(driveScalar);
-            dt.fieldOrientedTranslate(
+            dt.robotOrientedTranslate(
                     rightJoyStickX,
                     rightJoyStickY,
-                    leftJoystickX,
-                    heading
+                    leftJoystickX
             );
 
             telemetyStuff();
@@ -81,13 +80,13 @@ public class AssembledBot extends LinearOpMode{
             telemetry.addData("Orientation", imu.getRobotOrientation());
             telemetry.addData("ContinuousYaw", imu.getContinuousHeadingDeg());
         }
-        if (robot.isIOInit()) telemetry.addLine("IO initialized");
-        if (robot.isTurretInit()) telemetry.addLine("Turret initialized");
-        if (robot.isHuskyInit()) {
-
-            telemetry.addLine("Husky initialized");
-            telemetry.addData("Husky mode:", robot.getCurrentMode());
-        }
+//        if (robot.isIOInit()) telemetry.addLine("IO initialized");
+//        if (robot.isTurretInit()) telemetry.addLine("Turret initialized");
+//        if (robot.isHuskyInit()) {
+//
+//            telemetry.addLine("Husky initialized");
+//            telemetry.addData("Husky mode:", robot.getCurrentMode());
+//        }
 
         telemetry.update();
     }
